@@ -1,0 +1,32 @@
+* {
+    padding: 0;
+    margin: 0;
+    direction: rtl;
+    box-sizing: border-box;
+}
+
+:root {
+    font-family: Ravi NoEn, serif;
+    font-size: 1.6vh;
+}
+
+* {
+    -webkit-user-select: none; /* Safari */
+    -ms-user-select: none; /* IE 10 and IE 11 */
+    user-select: none; /* Standard syntax */
+}
+
+h1, h2, h3, h4, h5 {
+    font-weight: bold;
+}
+
+body {
+    background: #FFF0D1;
+}
+
+body, html {
+    height: 100vh;
+    overflow: hidden;
+}
+
+

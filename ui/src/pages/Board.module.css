@@ -1,0 +1,31 @@
+
+.Board {
+    background: black;
+    height: 96vw;
+    margin-top: 5vh;
+    width: 96vw;
+    margin-right: 2vw;
+
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    gap: 0;
+    border: 2px #795757 solid;
+
+}
+
+.BoardItem {
+    background: white;
+    flex: 0 0 calc(100% / 40);
+    aspect-ratio: 1/1;
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+    transition: 0.2s;
+}
+
+.BoardItem.Selected {
+    transform: scale(1.5);
+    z-index: 10;
+    border: 1px black solid;
+}

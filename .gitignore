@@ -1,0 +1,17 @@
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# React
+build/
+public/
+
+# Golang
+/bin/
+/vendor/
+
+# Environment variables
+.env
+serializer.ts*

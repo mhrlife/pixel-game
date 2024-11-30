@@ -1,0 +1,24 @@
+{
+  "token_hmac_secret_key": "e7c48b48-d80f-4249-bf89-e90ab9641cd0",
+  "admin_password": "7591d7d0-15f6-4a12-90b5-2c31dbf0a4cd",
+  "admin_secret": "8ed4e1fd-659f-43eb-9fd2-f0e3a68cf62d",
+  "api_key": "83892ae7-2bb8-47fb-b93f-52c23e20f8af",
+  "allowed_origins": [
+    "*"
+  ],
+  "port": 8000,
+  "websocket_compression": true,
+  "admin": true,
+  "grpc_api": true,
+  "user_subscribe_to_personal": true,
+  "user_personal_channel_namespace": "personal",
+  "namespaces": [
+    {
+      "name": "personal",
+      "presence": true,
+      "force_recovery": true,
+      "history_size": 5,
+      "history_ttl": "5m"
+    }
+  ]
+}
