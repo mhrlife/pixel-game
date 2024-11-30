@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"nevissGo/ent/hype"
 	"nevissGo/ent/pixel"
 	"nevissGo/ent/user"
 	"reflect"
@@ -74,6 +75,7 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
+			hype.Table:  hype.ValidColumn,
 			pixel.Table: pixel.ValidColumn,
 			user.Table:  user.ValidColumn,
 		})

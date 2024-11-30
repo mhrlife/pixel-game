@@ -49,19 +49,23 @@ func (pu *PixelUpdate) SetUpdatedAt(t time.Time) *PixelUpdate {
 	return pu
 }
 
-// AddUserIDs adds the "user" edge to the User entity by IDs.
-func (pu *PixelUpdate) AddUserIDs(ids ...int64) *PixelUpdate {
-	pu.mutation.AddUserIDs(ids...)
+// SetUserID sets the "user" edge to the User entity by ID.
+func (pu *PixelUpdate) SetUserID(id int64) *PixelUpdate {
+	pu.mutation.SetUserID(id)
 	return pu
 }
 
-// AddUser adds the "user" edges to the User entity.
-func (pu *PixelUpdate) AddUser(u ...*User) *PixelUpdate {
-	ids := make([]int64, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
+func (pu *PixelUpdate) SetNillableUserID(id *int64) *PixelUpdate {
+	if id != nil {
+		pu = pu.SetUserID(*id)
 	}
-	return pu.AddUserIDs(ids...)
+	return pu
+}
+
+// SetUser sets the "user" edge to the User entity.
+func (pu *PixelUpdate) SetUser(u *User) *PixelUpdate {
+	return pu.SetUserID(u.ID)
 }
 
 // Mutation returns the PixelMutation object of the builder.
@@ -69,25 +73,10 @@ func (pu *PixelUpdate) Mutation() *PixelMutation {
 	return pu.mutation
 }
 
-// ClearUser clears all "user" edges to the User entity.
+// ClearUser clears the "user" edge to the User entity.
 func (pu *PixelUpdate) ClearUser() *PixelUpdate {
 	pu.mutation.ClearUser()
 	return pu
-}
-
-// RemoveUserIDs removes the "user" edge to User entities by IDs.
-func (pu *PixelUpdate) RemoveUserIDs(ids ...int64) *PixelUpdate {
-	pu.mutation.RemoveUserIDs(ids...)
-	return pu
-}
-
-// RemoveUser removes "user" edges to User entities.
-func (pu *PixelUpdate) RemoveUser(u ...*User) *PixelUpdate {
-	ids := make([]int64, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return pu.RemoveUserIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -143,39 +132,23 @@ func (pu *PixelUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if pu.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   pixel.UserTable,
-			Columns: pixel.UserPrimaryKey,
+			Columns: []string{pixel.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := pu.mutation.RemovedUserIDs(); len(nodes) > 0 && !pu.mutation.UserCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   pixel.UserTable,
-			Columns: pixel.UserPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := pu.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   pixel.UserTable,
-			Columns: pixel.UserPrimaryKey,
+			Columns: []string{pixel.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
@@ -226,19 +199,23 @@ func (puo *PixelUpdateOne) SetUpdatedAt(t time.Time) *PixelUpdateOne {
 	return puo
 }
 
-// AddUserIDs adds the "user" edge to the User entity by IDs.
-func (puo *PixelUpdateOne) AddUserIDs(ids ...int64) *PixelUpdateOne {
-	puo.mutation.AddUserIDs(ids...)
+// SetUserID sets the "user" edge to the User entity by ID.
+func (puo *PixelUpdateOne) SetUserID(id int64) *PixelUpdateOne {
+	puo.mutation.SetUserID(id)
 	return puo
 }
 
-// AddUser adds the "user" edges to the User entity.
-func (puo *PixelUpdateOne) AddUser(u ...*User) *PixelUpdateOne {
-	ids := make([]int64, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
+func (puo *PixelUpdateOne) SetNillableUserID(id *int64) *PixelUpdateOne {
+	if id != nil {
+		puo = puo.SetUserID(*id)
 	}
-	return puo.AddUserIDs(ids...)
+	return puo
+}
+
+// SetUser sets the "user" edge to the User entity.
+func (puo *PixelUpdateOne) SetUser(u *User) *PixelUpdateOne {
+	return puo.SetUserID(u.ID)
 }
 
 // Mutation returns the PixelMutation object of the builder.
@@ -246,25 +223,10 @@ func (puo *PixelUpdateOne) Mutation() *PixelMutation {
 	return puo.mutation
 }
 
-// ClearUser clears all "user" edges to the User entity.
+// ClearUser clears the "user" edge to the User entity.
 func (puo *PixelUpdateOne) ClearUser() *PixelUpdateOne {
 	puo.mutation.ClearUser()
 	return puo
-}
-
-// RemoveUserIDs removes the "user" edge to User entities by IDs.
-func (puo *PixelUpdateOne) RemoveUserIDs(ids ...int64) *PixelUpdateOne {
-	puo.mutation.RemoveUserIDs(ids...)
-	return puo
-}
-
-// RemoveUser removes "user" edges to User entities.
-func (puo *PixelUpdateOne) RemoveUser(u ...*User) *PixelUpdateOne {
-	ids := make([]int64, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return puo.RemoveUserIDs(ids...)
 }
 
 // Where appends a list predicates to the PixelUpdate builder.
@@ -350,39 +312,23 @@ func (puo *PixelUpdateOne) sqlSave(ctx context.Context) (_node *Pixel, err error
 	}
 	if puo.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   pixel.UserTable,
-			Columns: pixel.UserPrimaryKey,
+			Columns: []string{pixel.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
 			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := puo.mutation.RemovedUserIDs(); len(nodes) > 0 && !puo.mutation.UserCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   pixel.UserTable,
-			Columns: pixel.UserPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := puo.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   pixel.UserTable,
-			Columns: pixel.UserPrimaryKey,
+			Columns: []string{pixel.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),

@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"nevissGo/ent/hype"
 	"nevissGo/ent/pixel"
 	"nevissGo/ent/predicate"
 	"nevissGo/ent/user"
@@ -25,9 +26,667 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
+	TypeHype  = "Hype"
 	TypePixel = "Pixel"
 	TypeUser  = "User"
 )
+
+// HypeMutation represents an operation that mutates the Hype nodes in the graph.
+type HypeMutation struct {
+	config
+	op                  Op
+	typ                 string
+	id                  *int
+	amount_remaining    *int
+	addamount_remaining *int
+	max_hype            *int
+	addmax_hype         *int
+	last_updated_at     *time.Time
+	hype_per_minute     *int
+	addhype_per_minute  *int
+	clearedFields       map[string]struct{}
+	user                *int64
+	cleareduser         bool
+	done                bool
+	oldValue            func(context.Context) (*Hype, error)
+	predicates          []predicate.Hype
+}
+
+var _ ent.Mutation = (*HypeMutation)(nil)
+
+// hypeOption allows management of the mutation configuration using functional options.
+type hypeOption func(*HypeMutation)
+
+// newHypeMutation creates new mutation for the Hype entity.
+func newHypeMutation(c config, op Op, opts ...hypeOption) *HypeMutation {
+	m := &HypeMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeHype,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withHypeID sets the ID field of the mutation.
+func withHypeID(id int) hypeOption {
+	return func(m *HypeMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Hype
+		)
+		m.oldValue = func(ctx context.Context) (*Hype, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Hype.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withHype sets the old Hype of the mutation.
+func withHype(node *Hype) hypeOption {
+	return func(m *HypeMutation) {
+		m.oldValue = func(context.Context) (*Hype, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m HypeMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m HypeMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *HypeMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *HypeMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Hype.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetAmountRemaining sets the "amount_remaining" field.
+func (m *HypeMutation) SetAmountRemaining(i int) {
+	m.amount_remaining = &i
+	m.addamount_remaining = nil
+}
+
+// AmountRemaining returns the value of the "amount_remaining" field in the mutation.
+func (m *HypeMutation) AmountRemaining() (r int, exists bool) {
+	v := m.amount_remaining
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAmountRemaining returns the old "amount_remaining" field's value of the Hype entity.
+// If the Hype object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HypeMutation) OldAmountRemaining(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAmountRemaining is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAmountRemaining requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAmountRemaining: %w", err)
+	}
+	return oldValue.AmountRemaining, nil
+}
+
+// AddAmountRemaining adds i to the "amount_remaining" field.
+func (m *HypeMutation) AddAmountRemaining(i int) {
+	if m.addamount_remaining != nil {
+		*m.addamount_remaining += i
+	} else {
+		m.addamount_remaining = &i
+	}
+}
+
+// AddedAmountRemaining returns the value that was added to the "amount_remaining" field in this mutation.
+func (m *HypeMutation) AddedAmountRemaining() (r int, exists bool) {
+	v := m.addamount_remaining
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAmountRemaining resets all changes to the "amount_remaining" field.
+func (m *HypeMutation) ResetAmountRemaining() {
+	m.amount_remaining = nil
+	m.addamount_remaining = nil
+}
+
+// SetMaxHype sets the "max_hype" field.
+func (m *HypeMutation) SetMaxHype(i int) {
+	m.max_hype = &i
+	m.addmax_hype = nil
+}
+
+// MaxHype returns the value of the "max_hype" field in the mutation.
+func (m *HypeMutation) MaxHype() (r int, exists bool) {
+	v := m.max_hype
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMaxHype returns the old "max_hype" field's value of the Hype entity.
+// If the Hype object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HypeMutation) OldMaxHype(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMaxHype is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMaxHype requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMaxHype: %w", err)
+	}
+	return oldValue.MaxHype, nil
+}
+
+// AddMaxHype adds i to the "max_hype" field.
+func (m *HypeMutation) AddMaxHype(i int) {
+	if m.addmax_hype != nil {
+		*m.addmax_hype += i
+	} else {
+		m.addmax_hype = &i
+	}
+}
+
+// AddedMaxHype returns the value that was added to the "max_hype" field in this mutation.
+func (m *HypeMutation) AddedMaxHype() (r int, exists bool) {
+	v := m.addmax_hype
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetMaxHype resets all changes to the "max_hype" field.
+func (m *HypeMutation) ResetMaxHype() {
+	m.max_hype = nil
+	m.addmax_hype = nil
+}
+
+// SetLastUpdatedAt sets the "last_updated_at" field.
+func (m *HypeMutation) SetLastUpdatedAt(t time.Time) {
+	m.last_updated_at = &t
+}
+
+// LastUpdatedAt returns the value of the "last_updated_at" field in the mutation.
+func (m *HypeMutation) LastUpdatedAt() (r time.Time, exists bool) {
+	v := m.last_updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastUpdatedAt returns the old "last_updated_at" field's value of the Hype entity.
+// If the Hype object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HypeMutation) OldLastUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldLastUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldLastUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastUpdatedAt: %w", err)
+	}
+	return oldValue.LastUpdatedAt, nil
+}
+
+// ResetLastUpdatedAt resets all changes to the "last_updated_at" field.
+func (m *HypeMutation) ResetLastUpdatedAt() {
+	m.last_updated_at = nil
+}
+
+// SetHypePerMinute sets the "hype_per_minute" field.
+func (m *HypeMutation) SetHypePerMinute(i int) {
+	m.hype_per_minute = &i
+	m.addhype_per_minute = nil
+}
+
+// HypePerMinute returns the value of the "hype_per_minute" field in the mutation.
+func (m *HypeMutation) HypePerMinute() (r int, exists bool) {
+	v := m.hype_per_minute
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldHypePerMinute returns the old "hype_per_minute" field's value of the Hype entity.
+// If the Hype object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *HypeMutation) OldHypePerMinute(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldHypePerMinute is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldHypePerMinute requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldHypePerMinute: %w", err)
+	}
+	return oldValue.HypePerMinute, nil
+}
+
+// AddHypePerMinute adds i to the "hype_per_minute" field.
+func (m *HypeMutation) AddHypePerMinute(i int) {
+	if m.addhype_per_minute != nil {
+		*m.addhype_per_minute += i
+	} else {
+		m.addhype_per_minute = &i
+	}
+}
+
+// AddedHypePerMinute returns the value that was added to the "hype_per_minute" field in this mutation.
+func (m *HypeMutation) AddedHypePerMinute() (r int, exists bool) {
+	v := m.addhype_per_minute
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetHypePerMinute resets all changes to the "hype_per_minute" field.
+func (m *HypeMutation) ResetHypePerMinute() {
+	m.hype_per_minute = nil
+	m.addhype_per_minute = nil
+}
+
+// SetUserID sets the "user" edge to the User entity by id.
+func (m *HypeMutation) SetUserID(id int64) {
+	m.user = &id
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (m *HypeMutation) ClearUser() {
+	m.cleareduser = true
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *HypeMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// UserID returns the "user" edge ID in the mutation.
+func (m *HypeMutation) UserID() (id int64, exists bool) {
+	if m.user != nil {
+		return *m.user, true
+	}
+	return
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *HypeMutation) UserIDs() (ids []int64) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *HypeMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
+// Where appends a list predicates to the HypeMutation builder.
+func (m *HypeMutation) Where(ps ...predicate.Hype) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the HypeMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *HypeMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Hype, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *HypeMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *HypeMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Hype).
+func (m *HypeMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *HypeMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.amount_remaining != nil {
+		fields = append(fields, hype.FieldAmountRemaining)
+	}
+	if m.max_hype != nil {
+		fields = append(fields, hype.FieldMaxHype)
+	}
+	if m.last_updated_at != nil {
+		fields = append(fields, hype.FieldLastUpdatedAt)
+	}
+	if m.hype_per_minute != nil {
+		fields = append(fields, hype.FieldHypePerMinute)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *HypeMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case hype.FieldAmountRemaining:
+		return m.AmountRemaining()
+	case hype.FieldMaxHype:
+		return m.MaxHype()
+	case hype.FieldLastUpdatedAt:
+		return m.LastUpdatedAt()
+	case hype.FieldHypePerMinute:
+		return m.HypePerMinute()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *HypeMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case hype.FieldAmountRemaining:
+		return m.OldAmountRemaining(ctx)
+	case hype.FieldMaxHype:
+		return m.OldMaxHype(ctx)
+	case hype.FieldLastUpdatedAt:
+		return m.OldLastUpdatedAt(ctx)
+	case hype.FieldHypePerMinute:
+		return m.OldHypePerMinute(ctx)
+	}
+	return nil, fmt.Errorf("unknown Hype field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *HypeMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case hype.FieldAmountRemaining:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAmountRemaining(v)
+		return nil
+	case hype.FieldMaxHype:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMaxHype(v)
+		return nil
+	case hype.FieldLastUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastUpdatedAt(v)
+		return nil
+	case hype.FieldHypePerMinute:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetHypePerMinute(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Hype field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *HypeMutation) AddedFields() []string {
+	var fields []string
+	if m.addamount_remaining != nil {
+		fields = append(fields, hype.FieldAmountRemaining)
+	}
+	if m.addmax_hype != nil {
+		fields = append(fields, hype.FieldMaxHype)
+	}
+	if m.addhype_per_minute != nil {
+		fields = append(fields, hype.FieldHypePerMinute)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *HypeMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case hype.FieldAmountRemaining:
+		return m.AddedAmountRemaining()
+	case hype.FieldMaxHype:
+		return m.AddedMaxHype()
+	case hype.FieldHypePerMinute:
+		return m.AddedHypePerMinute()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *HypeMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case hype.FieldAmountRemaining:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAmountRemaining(v)
+		return nil
+	case hype.FieldMaxHype:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddMaxHype(v)
+		return nil
+	case hype.FieldHypePerMinute:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddHypePerMinute(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Hype numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *HypeMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *HypeMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *HypeMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Hype nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *HypeMutation) ResetField(name string) error {
+	switch name {
+	case hype.FieldAmountRemaining:
+		m.ResetAmountRemaining()
+		return nil
+	case hype.FieldMaxHype:
+		m.ResetMaxHype()
+		return nil
+	case hype.FieldLastUpdatedAt:
+		m.ResetLastUpdatedAt()
+		return nil
+	case hype.FieldHypePerMinute:
+		m.ResetHypePerMinute()
+		return nil
+	}
+	return fmt.Errorf("unknown Hype field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *HypeMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.user != nil {
+		edges = append(edges, hype.EdgeUser)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *HypeMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case hype.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *HypeMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *HypeMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *HypeMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.cleareduser {
+		edges = append(edges, hype.EdgeUser)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *HypeMutation) EdgeCleared(name string) bool {
+	switch name {
+	case hype.EdgeUser:
+		return m.cleareduser
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *HypeMutation) ClearEdge(name string) error {
+	switch name {
+	case hype.EdgeUser:
+		m.ClearUser()
+		return nil
+	}
+	return fmt.Errorf("unknown Hype unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *HypeMutation) ResetEdge(name string) error {
+	switch name {
+	case hype.EdgeUser:
+		m.ResetUser()
+		return nil
+	}
+	return fmt.Errorf("unknown Hype edge %s", name)
+}
 
 // PixelMutation represents an operation that mutates the Pixel nodes in the graph.
 type PixelMutation struct {
@@ -38,8 +697,7 @@ type PixelMutation struct {
 	color         *string
 	updated_at    *time.Time
 	clearedFields map[string]struct{}
-	user          map[int64]struct{}
-	removeduser   map[int64]struct{}
+	user          *int64
 	cleareduser   bool
 	done          bool
 	oldValue      func(context.Context) (*Pixel, error)
@@ -222,14 +880,9 @@ func (m *PixelMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
-// AddUserIDs adds the "user" edge to the User entity by ids.
-func (m *PixelMutation) AddUserIDs(ids ...int64) {
-	if m.user == nil {
-		m.user = make(map[int64]struct{})
-	}
-	for i := range ids {
-		m.user[ids[i]] = struct{}{}
-	}
+// SetUserID sets the "user" edge to the User entity by id.
+func (m *PixelMutation) SetUserID(id int64) {
+	m.user = &id
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -242,29 +895,20 @@ func (m *PixelMutation) UserCleared() bool {
 	return m.cleareduser
 }
 
-// RemoveUserIDs removes the "user" edge to the User entity by IDs.
-func (m *PixelMutation) RemoveUserIDs(ids ...int64) {
-	if m.removeduser == nil {
-		m.removeduser = make(map[int64]struct{})
-	}
-	for i := range ids {
-		delete(m.user, ids[i])
-		m.removeduser[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedUser returns the removed IDs of the "user" edge to the User entity.
-func (m *PixelMutation) RemovedUserIDs() (ids []int64) {
-	for id := range m.removeduser {
-		ids = append(ids, id)
+// UserID returns the "user" edge ID in the mutation.
+func (m *PixelMutation) UserID() (id int64, exists bool) {
+	if m.user != nil {
+		return *m.user, true
 	}
 	return
 }
 
 // UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
 func (m *PixelMutation) UserIDs() (ids []int64) {
-	for id := range m.user {
-		ids = append(ids, id)
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
 	}
 	return
 }
@@ -273,7 +917,6 @@ func (m *PixelMutation) UserIDs() (ids []int64) {
 func (m *PixelMutation) ResetUser() {
 	m.user = nil
 	m.cleareduser = false
-	m.removeduser = nil
 }
 
 // Where appends a list predicates to the PixelMutation builder.
@@ -438,11 +1081,9 @@ func (m *PixelMutation) AddedEdges() []string {
 func (m *PixelMutation) AddedIDs(name string) []ent.Value {
 	switch name {
 	case pixel.EdgeUser:
-		ids := make([]ent.Value, 0, len(m.user))
-		for id := range m.user {
-			ids = append(ids, id)
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
 		}
-		return ids
 	}
 	return nil
 }
@@ -450,23 +1091,12 @@ func (m *PixelMutation) AddedIDs(name string) []ent.Value {
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *PixelMutation) RemovedEdges() []string {
 	edges := make([]string, 0, 1)
-	if m.removeduser != nil {
-		edges = append(edges, pixel.EdgeUser)
-	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *PixelMutation) RemovedIDs(name string) []ent.Value {
-	switch name {
-	case pixel.EdgeUser:
-		ids := make([]ent.Value, 0, len(m.removeduser))
-		for id := range m.removeduser {
-			ids = append(ids, id)
-		}
-		return ids
-	}
 	return nil
 }
 
@@ -493,6 +1123,9 @@ func (m *PixelMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *PixelMutation) ClearEdge(name string) error {
 	switch name {
+	case pixel.EdgeUser:
+		m.ClearUser()
+		return nil
 	}
 	return fmt.Errorf("unknown Pixel unique edge %s", name)
 }
@@ -520,6 +1153,8 @@ type UserMutation struct {
 	pixels        map[int]struct{}
 	removedpixels map[int]struct{}
 	clearedpixels bool
+	hype          *int
+	clearedhype   bool
 	done          bool
 	oldValue      func(context.Context) (*User, error)
 	predicates    []predicate.User
@@ -755,6 +1390,45 @@ func (m *UserMutation) ResetPixels() {
 	m.removedpixels = nil
 }
 
+// SetHypeID sets the "hype" edge to the Hype entity by id.
+func (m *UserMutation) SetHypeID(id int) {
+	m.hype = &id
+}
+
+// ClearHype clears the "hype" edge to the Hype entity.
+func (m *UserMutation) ClearHype() {
+	m.clearedhype = true
+}
+
+// HypeCleared reports if the "hype" edge to the Hype entity was cleared.
+func (m *UserMutation) HypeCleared() bool {
+	return m.clearedhype
+}
+
+// HypeID returns the "hype" edge ID in the mutation.
+func (m *UserMutation) HypeID() (id int, exists bool) {
+	if m.hype != nil {
+		return *m.hype, true
+	}
+	return
+}
+
+// HypeIDs returns the "hype" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// HypeID instead. It exists only for internal usage by the builders.
+func (m *UserMutation) HypeIDs() (ids []int) {
+	if id := m.hype; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetHype resets all changes to the "hype" edge.
+func (m *UserMutation) ResetHype() {
+	m.hype = nil
+	m.clearedhype = false
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -905,9 +1579,12 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.pixels != nil {
 		edges = append(edges, user.EdgePixels)
+	}
+	if m.hype != nil {
+		edges = append(edges, user.EdgeHype)
 	}
 	return edges
 }
@@ -922,13 +1599,17 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeHype:
+		if id := m.hype; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.removedpixels != nil {
 		edges = append(edges, user.EdgePixels)
 	}
@@ -951,9 +1632,12 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 1)
+	edges := make([]string, 0, 2)
 	if m.clearedpixels {
 		edges = append(edges, user.EdgePixels)
+	}
+	if m.clearedhype {
+		edges = append(edges, user.EdgeHype)
 	}
 	return edges
 }
@@ -964,6 +1648,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 	switch name {
 	case user.EdgePixels:
 		return m.clearedpixels
+	case user.EdgeHype:
+		return m.clearedhype
 	}
 	return false
 }
@@ -972,6 +1658,9 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *UserMutation) ClearEdge(name string) error {
 	switch name {
+	case user.EdgeHype:
+		m.ClearHype()
+		return nil
 	}
 	return fmt.Errorf("unknown User unique edge %s", name)
 }
@@ -982,6 +1671,9 @@ func (m *UserMutation) ResetEdge(name string) error {
 	switch name {
 	case user.EdgePixels:
 		m.ResetPixels()
+		return nil
+	case user.EdgeHype:
+		m.ResetHype()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

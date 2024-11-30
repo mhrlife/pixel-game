@@ -6,6 +6,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Hype is the predicate function for hype builders.
+type Hype func(*sql.Selector)
+
 // Pixel is the predicate function for pixel builders.
 type Pixel func(*sql.Selector)
 

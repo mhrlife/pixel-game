@@ -4,6 +4,7 @@ package ent
 
 import (
 	"fmt"
+	"nevissGo/ent/hype"
 	"nevissGo/ent/user"
 	"strings"
 
@@ -30,9 +31,11 @@ type User struct {
 type UserEdges struct {
 	// Pixels holds the value of the pixels edge.
 	Pixels []*Pixel `json:"pixels,omitempty"`
+	// Hype holds the value of the hype edge.
+	Hype *Hype `json:"hype,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // PixelsOrErr returns the Pixels value or an error if the edge
@@ -42,6 +45,17 @@ func (e UserEdges) PixelsOrErr() ([]*Pixel, error) {
 		return e.Pixels, nil
 	}
 	return nil, &NotLoadedError{edge: "pixels"}
+}
+
+// HypeOrErr returns the Hype value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e UserEdges) HypeOrErr() (*Hype, error) {
+	if e.Hype != nil {
+		return e.Hype, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: hype.Label}
+	}
+	return nil, &NotLoadedError{edge: "hype"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -102,6 +116,11 @@ func (u *User) Value(name string) (ent.Value, error) {
 // QueryPixels queries the "pixels" edge of the User entity.
 func (u *User) QueryPixels() *PixelQuery {
 	return NewUserClient(u.config).QueryPixels(u)
+}
+
+// QueryHype queries the "hype" edge of the User entity.
+func (u *User) QueryHype() *HypeQuery {
+	return NewUserClient(u.config).QueryHype(u)
 }
 
 // Update returns a builder for updating this User.

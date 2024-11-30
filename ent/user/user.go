@@ -18,13 +18,24 @@ const (
 	FieldGameID = "game_id"
 	// EdgePixels holds the string denoting the pixels edge name in mutations.
 	EdgePixels = "pixels"
+	// EdgeHype holds the string denoting the hype edge name in mutations.
+	EdgeHype = "hype"
 	// Table holds the table name of the user in the database.
 	Table = "users"
-	// PixelsTable is the table that holds the pixels relation/edge. The primary key declared below.
-	PixelsTable = "user_pixels"
+	// PixelsTable is the table that holds the pixels relation/edge.
+	PixelsTable = "pixels"
 	// PixelsInverseTable is the table name for the Pixel entity.
 	// It exists in this package in order to avoid circular dependency with the "pixel" package.
 	PixelsInverseTable = "pixels"
+	// PixelsColumn is the table column denoting the pixels relation/edge.
+	PixelsColumn = "user_pixels"
+	// HypeTable is the table that holds the hype relation/edge.
+	HypeTable = "hypes"
+	// HypeInverseTable is the table name for the Hype entity.
+	// It exists in this package in order to avoid circular dependency with the "hype" package.
+	HypeInverseTable = "hypes"
+	// HypeColumn is the table column denoting the hype relation/edge.
+	HypeColumn = "user_hype"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -33,12 +44,6 @@ var Columns = []string{
 	FieldDisplayName,
 	FieldGameID,
 }
-
-var (
-	// PixelsPrimaryKey and PixelsColumn2 are the table columns denoting the
-	// primary key for the pixels relation (M2M).
-	PixelsPrimaryKey = []string{"user_id", "pixel_id"}
-)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -81,10 +86,24 @@ func ByPixels(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newPixelsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByHypeField orders the results by hype field.
+func ByHypeField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newHypeStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newPixelsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(PixelsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2M, false, PixelsTable, PixelsPrimaryKey...),
+		sqlgraph.Edge(sqlgraph.O2M, false, PixelsTable, PixelsColumn),
+	)
+}
+func newHypeStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(HypeInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, HypeTable, HypeColumn),
 	)
 }

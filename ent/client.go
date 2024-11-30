@@ -11,6 +11,7 @@ import (
 
 	"nevissGo/ent/migrate"
 
+	"nevissGo/ent/hype"
 	"nevissGo/ent/pixel"
 	"nevissGo/ent/user"
 
@@ -25,6 +26,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// Hype is the client for interacting with the Hype builders.
+	Hype *HypeClient
 	// Pixel is the client for interacting with the Pixel builders.
 	Pixel *PixelClient
 	// User is the client for interacting with the User builders.
@@ -40,6 +43,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.Hype = NewHypeClient(c.config)
 	c.Pixel = NewPixelClient(c.config)
 	c.User = NewUserClient(c.config)
 }
@@ -134,6 +138,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		ctx:    ctx,
 		config: cfg,
+		Hype:   NewHypeClient(cfg),
 		Pixel:  NewPixelClient(cfg),
 		User:   NewUserClient(cfg),
 	}, nil
@@ -155,6 +160,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	return &Tx{
 		ctx:    ctx,
 		config: cfg,
+		Hype:   NewHypeClient(cfg),
 		Pixel:  NewPixelClient(cfg),
 		User:   NewUserClient(cfg),
 	}, nil
@@ -163,7 +169,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Pixel.
+//		Hype.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -185,6 +191,7 @@ func (c *Client) Close() error {
 // Use adds the mutation hooks to all the entity clients.
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
+	c.Hype.Use(hooks...)
 	c.Pixel.Use(hooks...)
 	c.User.Use(hooks...)
 }
@@ -192,6 +199,7 @@ func (c *Client) Use(hooks ...Hook) {
 // Intercept adds the query interceptors to all the entity clients.
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
+	c.Hype.Intercept(interceptors...)
 	c.Pixel.Intercept(interceptors...)
 	c.User.Intercept(interceptors...)
 }
@@ -199,12 +207,163 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *HypeMutation:
+		return c.Hype.mutate(ctx, m)
 	case *PixelMutation:
 		return c.Pixel.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// HypeClient is a client for the Hype schema.
+type HypeClient struct {
+	config
+}
+
+// NewHypeClient returns a client for the Hype from the given config.
+func NewHypeClient(c config) *HypeClient {
+	return &HypeClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `hype.Hooks(f(g(h())))`.
+func (c *HypeClient) Use(hooks ...Hook) {
+	c.hooks.Hype = append(c.hooks.Hype, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `hype.Intercept(f(g(h())))`.
+func (c *HypeClient) Intercept(interceptors ...Interceptor) {
+	c.inters.Hype = append(c.inters.Hype, interceptors...)
+}
+
+// Create returns a builder for creating a Hype entity.
+func (c *HypeClient) Create() *HypeCreate {
+	mutation := newHypeMutation(c.config, OpCreate)
+	return &HypeCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Hype entities.
+func (c *HypeClient) CreateBulk(builders ...*HypeCreate) *HypeCreateBulk {
+	return &HypeCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *HypeClient) MapCreateBulk(slice any, setFunc func(*HypeCreate, int)) *HypeCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &HypeCreateBulk{err: fmt.Errorf("calling to HypeClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*HypeCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &HypeCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Hype.
+func (c *HypeClient) Update() *HypeUpdate {
+	mutation := newHypeMutation(c.config, OpUpdate)
+	return &HypeUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *HypeClient) UpdateOne(h *Hype) *HypeUpdateOne {
+	mutation := newHypeMutation(c.config, OpUpdateOne, withHype(h))
+	return &HypeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *HypeClient) UpdateOneID(id int) *HypeUpdateOne {
+	mutation := newHypeMutation(c.config, OpUpdateOne, withHypeID(id))
+	return &HypeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Hype.
+func (c *HypeClient) Delete() *HypeDelete {
+	mutation := newHypeMutation(c.config, OpDelete)
+	return &HypeDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *HypeClient) DeleteOne(h *Hype) *HypeDeleteOne {
+	return c.DeleteOneID(h.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *HypeClient) DeleteOneID(id int) *HypeDeleteOne {
+	builder := c.Delete().Where(hype.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &HypeDeleteOne{builder}
+}
+
+// Query returns a query builder for Hype.
+func (c *HypeClient) Query() *HypeQuery {
+	return &HypeQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeHype},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a Hype entity by its id.
+func (c *HypeClient) Get(ctx context.Context, id int) (*Hype, error) {
+	return c.Query().Where(hype.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *HypeClient) GetX(ctx context.Context, id int) *Hype {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a Hype.
+func (c *HypeClient) QueryUser(h *Hype) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := h.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(hype.Table, hype.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, hype.UserTable, hype.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(h.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *HypeClient) Hooks() []Hook {
+	return c.hooks.Hype
+}
+
+// Interceptors returns the client interceptors.
+func (c *HypeClient) Interceptors() []Interceptor {
+	return c.inters.Hype
+}
+
+func (c *HypeClient) mutate(ctx context.Context, m *HypeMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&HypeCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&HypeUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&HypeUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&HypeDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown Hype mutation op: %q", m.Op())
 	}
 }
 
@@ -324,7 +483,7 @@ func (c *PixelClient) QueryUser(pi *Pixel) *UserQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(pixel.Table, pixel.FieldID, id),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, pixel.UserTable, pixel.UserPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.M2O, true, pixel.UserTable, pixel.UserColumn),
 		)
 		fromV = sqlgraph.Neighbors(pi.driver.Dialect(), step)
 		return fromV, nil
@@ -473,7 +632,23 @@ func (c *UserClient) QueryPixels(u *User) *PixelQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, id),
 			sqlgraph.To(pixel.Table, pixel.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, user.PixelsTable, user.PixelsPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.PixelsTable, user.PixelsColumn),
+		)
+		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryHype queries the hype edge of a User.
+func (c *UserClient) QueryHype(u *User) *HypeQuery {
+	query := (&HypeClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := u.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(hype.Table, hype.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, user.HypeTable, user.HypeColumn),
 		)
 		fromV = sqlgraph.Neighbors(u.driver.Dialect(), step)
 		return fromV, nil
@@ -509,9 +684,9 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Pixel, User []ent.Hook
+		Hype, Pixel, User []ent.Hook
 	}
 	inters struct {
-		Pixel, User []ent.Interceptor
+		Hype, Pixel, User []ent.Interceptor
 	}
 )

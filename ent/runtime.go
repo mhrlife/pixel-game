@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"nevissGo/ent/hype"
 	"nevissGo/ent/pixel"
 	"nevissGo/ent/schema"
 	"time"
@@ -12,6 +13,18 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	hypeFields := schema.Hype{}.Fields()
+	_ = hypeFields
+	// hypeDescLastUpdatedAt is the schema descriptor for last_updated_at field.
+	hypeDescLastUpdatedAt := hypeFields[2].Descriptor()
+	// hype.DefaultLastUpdatedAt holds the default value on creation for the last_updated_at field.
+	hype.DefaultLastUpdatedAt = hypeDescLastUpdatedAt.Default.(func() time.Time)
+	// hype.UpdateDefaultLastUpdatedAt holds the default value on update for the last_updated_at field.
+	hype.UpdateDefaultLastUpdatedAt = hypeDescLastUpdatedAt.UpdateDefault.(func() time.Time)
+	// hypeDescHypePerMinute is the schema descriptor for hype_per_minute field.
+	hypeDescHypePerMinute := hypeFields[3].Descriptor()
+	// hype.DefaultHypePerMinute holds the default value on creation for the hype_per_minute field.
+	hype.DefaultHypePerMinute = hypeDescHypePerMinute.Default.(int)
 	pixelFields := schema.Pixel{}.Fields()
 	_ = pixelFields
 	// pixelDescUpdatedAt is the schema descriptor for updated_at field.

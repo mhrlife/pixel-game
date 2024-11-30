@@ -7,12 +7,10 @@ import (
 	"entgo.io/ent/schema/index"
 )
 
-// User holds the schema definition for the User entity.
 type User struct {
 	ent.Schema
 }
 
-// Fields of the User.
 func (User) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id"),
@@ -21,10 +19,10 @@ func (User) Fields() []ent.Field {
 	}
 }
 
-// Edges of the User.
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("pixels", Pixel.Type),
+		edge.To("hype", Hype.Type).Unique(),
 	}
 }
 

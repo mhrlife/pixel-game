@@ -8,17 +8,49 @@ import (
 )
 
 var (
+	// HypesColumns holds the columns for the "hypes" table.
+	HypesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "amount_remaining", Type: field.TypeInt},
+		{Name: "max_hype", Type: field.TypeInt},
+		{Name: "last_updated_at", Type: field.TypeTime},
+		{Name: "hype_per_minute", Type: field.TypeInt, Default: 2},
+		{Name: "user_hype", Type: field.TypeInt64, Unique: true},
+	}
+	// HypesTable holds the schema information for the "hypes" table.
+	HypesTable = &schema.Table{
+		Name:       "hypes",
+		Columns:    HypesColumns,
+		PrimaryKey: []*schema.Column{HypesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "hypes_users_hype",
+				Columns:    []*schema.Column{HypesColumns[5]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// PixelsColumns holds the columns for the "pixels" table.
 	PixelsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "color", Type: field.TypeString},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "user_pixels", Type: field.TypeInt64, Nullable: true},
 	}
 	// PixelsTable holds the schema information for the "pixels" table.
 	PixelsTable = &schema.Table{
 		Name:       "pixels",
 		Columns:    PixelsColumns,
 		PrimaryKey: []*schema.Column{PixelsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "pixels_users_pixels",
+				Columns:    []*schema.Column{PixelsColumns[3]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
@@ -39,40 +71,15 @@ var (
 			},
 		},
 	}
-	// UserPixelsColumns holds the columns for the "user_pixels" table.
-	UserPixelsColumns = []*schema.Column{
-		{Name: "user_id", Type: field.TypeInt64},
-		{Name: "pixel_id", Type: field.TypeInt},
-	}
-	// UserPixelsTable holds the schema information for the "user_pixels" table.
-	UserPixelsTable = &schema.Table{
-		Name:       "user_pixels",
-		Columns:    UserPixelsColumns,
-		PrimaryKey: []*schema.Column{UserPixelsColumns[0], UserPixelsColumns[1]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "user_pixels_user_id",
-				Columns:    []*schema.Column{UserPixelsColumns[0]},
-				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.Cascade,
-			},
-			{
-				Symbol:     "user_pixels_pixel_id",
-				Columns:    []*schema.Column{UserPixelsColumns[1]},
-				RefColumns: []*schema.Column{PixelsColumns[0]},
-				OnDelete:   schema.Cascade,
-			},
-		},
-	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		HypesTable,
 		PixelsTable,
 		UsersTable,
-		UserPixelsTable,
 	}
 )
 
 func init() {
-	UserPixelsTable.ForeignKeys[0].RefTable = UsersTable
-	UserPixelsTable.ForeignKeys[1].RefTable = PixelsTable
+	HypesTable.ForeignKeys[0].RefTable = UsersTable
+	PixelsTable.ForeignKeys[0].RefTable = UsersTable
 }

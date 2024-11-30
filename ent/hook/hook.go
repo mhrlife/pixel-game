@@ -8,6 +8,18 @@ import (
 	"nevissGo/ent"
 )
 
+// The HypeFunc type is an adapter to allow the use of ordinary
+// function as Hype mutator.
+type HypeFunc func(context.Context, *ent.HypeMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f HypeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.HypeMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.HypeMutation", m)
+}
+
 // The PixelFunc type is an adapter to allow the use of ordinary
 // function as Pixel mutator.
 type PixelFunc func(context.Context, *ent.PixelMutation) (ent.Value, error)

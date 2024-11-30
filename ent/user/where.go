@@ -199,7 +199,7 @@ func HasPixels() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, PixelsTable, PixelsPrimaryKey...),
+			sqlgraph.Edge(sqlgraph.O2M, false, PixelsTable, PixelsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
@@ -209,6 +209,29 @@ func HasPixels() predicate.User {
 func HasPixelsWith(preds ...predicate.Pixel) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := newPixelsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasHype applies the HasEdge predicate on the "hype" edge.
+func HasHype() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, HypeTable, HypeColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasHypeWith applies the HasEdge predicate on the "hype" edge with a given conditions (other predicates).
+func HasHypeWith(preds ...predicate.Hype) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newHypeStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

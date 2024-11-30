@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"nevissGo/ent/hype"
 	"nevissGo/ent/pixel"
 	"nevissGo/ent/user"
 
@@ -51,6 +52,25 @@ func (uc *UserCreate) AddPixels(p ...*Pixel) *UserCreate {
 		ids[i] = p[i].ID
 	}
 	return uc.AddPixelIDs(ids...)
+}
+
+// SetHypeID sets the "hype" edge to the Hype entity by ID.
+func (uc *UserCreate) SetHypeID(id int) *UserCreate {
+	uc.mutation.SetHypeID(id)
+	return uc
+}
+
+// SetNillableHypeID sets the "hype" edge to the Hype entity by ID if the given value is not nil.
+func (uc *UserCreate) SetNillableHypeID(id *int) *UserCreate {
+	if id != nil {
+		uc = uc.SetHypeID(*id)
+	}
+	return uc
+}
+
+// SetHype sets the "hype" edge to the Hype entity.
+func (uc *UserCreate) SetHype(h *Hype) *UserCreate {
+	return uc.SetHypeID(h.ID)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -135,13 +155,29 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	}
 	if nodes := uc.mutation.PixelsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   user.PixelsTable,
-			Columns: user.PixelsPrimaryKey,
+			Columns: []string{user.PixelsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(pixel.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.HypeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.HypeTable,
+			Columns: []string{user.HypeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(hype.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

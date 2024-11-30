@@ -47,19 +47,23 @@ func (pc *PixelCreate) SetID(i int) *PixelCreate {
 	return pc
 }
 
-// AddUserIDs adds the "user" edge to the User entity by IDs.
-func (pc *PixelCreate) AddUserIDs(ids ...int64) *PixelCreate {
-	pc.mutation.AddUserIDs(ids...)
+// SetUserID sets the "user" edge to the User entity by ID.
+func (pc *PixelCreate) SetUserID(id int64) *PixelCreate {
+	pc.mutation.SetUserID(id)
 	return pc
 }
 
-// AddUser adds the "user" edges to the User entity.
-func (pc *PixelCreate) AddUser(u ...*User) *PixelCreate {
-	ids := make([]int64, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
+func (pc *PixelCreate) SetNillableUserID(id *int64) *PixelCreate {
+	if id != nil {
+		pc = pc.SetUserID(*id)
 	}
-	return pc.AddUserIDs(ids...)
+	return pc
+}
+
+// SetUser sets the "user" edge to the User entity.
+func (pc *PixelCreate) SetUser(u *User) *PixelCreate {
+	return pc.SetUserID(u.ID)
 }
 
 // Mutation returns the PixelMutation object of the builder.
@@ -153,10 +157,10 @@ func (pc *PixelCreate) createSpec() (*Pixel, *sqlgraph.CreateSpec) {
 	}
 	if nodes := pc.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.M2O,
 			Inverse: true,
 			Table:   pixel.UserTable,
-			Columns: pixel.UserPrimaryKey,
+			Columns: []string{pixel.UserColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64),
@@ -165,6 +169,7 @@ func (pc *PixelCreate) createSpec() (*Pixel, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.user_pixels = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

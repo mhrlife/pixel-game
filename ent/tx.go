@@ -12,6 +12,8 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// Hype is the client for interacting with the Hype builders.
+	Hype *HypeClient
 	// Pixel is the client for interacting with the Pixel builders.
 	Pixel *PixelClient
 	// User is the client for interacting with the User builders.
@@ -147,6 +149,7 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.Hype = NewHypeClient(tx.config)
 	tx.Pixel = NewPixelClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
@@ -158,7 +161,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: Pixel.QueryXXX(), the query will be executed
+// applies a query, for example: Hype.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"nevissGo/ent/hype"
 	"nevissGo/ent/pixel"
 	"nevissGo/ent/predicate"
 	"nevissGo/ent/user"
@@ -71,6 +72,25 @@ func (uu *UserUpdate) AddPixels(p ...*Pixel) *UserUpdate {
 	return uu.AddPixelIDs(ids...)
 }
 
+// SetHypeID sets the "hype" edge to the Hype entity by ID.
+func (uu *UserUpdate) SetHypeID(id int) *UserUpdate {
+	uu.mutation.SetHypeID(id)
+	return uu
+}
+
+// SetNillableHypeID sets the "hype" edge to the Hype entity by ID if the given value is not nil.
+func (uu *UserUpdate) SetNillableHypeID(id *int) *UserUpdate {
+	if id != nil {
+		uu = uu.SetHypeID(*id)
+	}
+	return uu
+}
+
+// SetHype sets the "hype" edge to the Hype entity.
+func (uu *UserUpdate) SetHype(h *Hype) *UserUpdate {
+	return uu.SetHypeID(h.ID)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
@@ -95,6 +115,12 @@ func (uu *UserUpdate) RemovePixels(p ...*Pixel) *UserUpdate {
 		ids[i] = p[i].ID
 	}
 	return uu.RemovePixelIDs(ids...)
+}
+
+// ClearHype clears the "hype" edge to the Hype entity.
+func (uu *UserUpdate) ClearHype() *UserUpdate {
+	uu.mutation.ClearHype()
+	return uu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -141,10 +167,10 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if uu.mutation.PixelsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   user.PixelsTable,
-			Columns: user.PixelsPrimaryKey,
+			Columns: []string{user.PixelsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(pixel.FieldID, field.TypeInt),
@@ -154,10 +180,10 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := uu.mutation.RemovedPixelsIDs(); len(nodes) > 0 && !uu.mutation.PixelsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   user.PixelsTable,
-			Columns: user.PixelsPrimaryKey,
+			Columns: []string{user.PixelsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(pixel.FieldID, field.TypeInt),
@@ -170,13 +196,42 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := uu.mutation.PixelsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   user.PixelsTable,
-			Columns: user.PixelsPrimaryKey,
+			Columns: []string{user.PixelsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(pixel.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.HypeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.HypeTable,
+			Columns: []string{user.HypeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(hype.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.HypeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.HypeTable,
+			Columns: []string{user.HypeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(hype.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -247,6 +302,25 @@ func (uuo *UserUpdateOne) AddPixels(p ...*Pixel) *UserUpdateOne {
 	return uuo.AddPixelIDs(ids...)
 }
 
+// SetHypeID sets the "hype" edge to the Hype entity by ID.
+func (uuo *UserUpdateOne) SetHypeID(id int) *UserUpdateOne {
+	uuo.mutation.SetHypeID(id)
+	return uuo
+}
+
+// SetNillableHypeID sets the "hype" edge to the Hype entity by ID if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableHypeID(id *int) *UserUpdateOne {
+	if id != nil {
+		uuo = uuo.SetHypeID(*id)
+	}
+	return uuo
+}
+
+// SetHype sets the "hype" edge to the Hype entity.
+func (uuo *UserUpdateOne) SetHype(h *Hype) *UserUpdateOne {
+	return uuo.SetHypeID(h.ID)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
@@ -271,6 +345,12 @@ func (uuo *UserUpdateOne) RemovePixels(p ...*Pixel) *UserUpdateOne {
 		ids[i] = p[i].ID
 	}
 	return uuo.RemovePixelIDs(ids...)
+}
+
+// ClearHype clears the "hype" edge to the Hype entity.
+func (uuo *UserUpdateOne) ClearHype() *UserUpdateOne {
+	uuo.mutation.ClearHype()
+	return uuo
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -347,10 +427,10 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if uuo.mutation.PixelsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   user.PixelsTable,
-			Columns: user.PixelsPrimaryKey,
+			Columns: []string{user.PixelsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(pixel.FieldID, field.TypeInt),
@@ -360,10 +440,10 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if nodes := uuo.mutation.RemovedPixelsIDs(); len(nodes) > 0 && !uuo.mutation.PixelsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   user.PixelsTable,
-			Columns: user.PixelsPrimaryKey,
+			Columns: []string{user.PixelsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(pixel.FieldID, field.TypeInt),
@@ -376,13 +456,42 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	}
 	if nodes := uuo.mutation.PixelsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
+			Rel:     sqlgraph.O2M,
 			Inverse: false,
 			Table:   user.PixelsTable,
-			Columns: user.PixelsPrimaryKey,
+			Columns: []string{user.PixelsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(pixel.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.HypeCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.HypeTable,
+			Columns: []string{user.HypeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(hype.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.HypeIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.HypeTable,
+			Columns: []string{user.HypeColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(hype.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

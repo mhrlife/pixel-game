@@ -14,4 +14,4 @@ public/
 
 # Environment variables
 .env
-serializer.ts*
+serializer.**.backup
