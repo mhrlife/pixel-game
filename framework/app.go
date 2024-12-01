@@ -2,11 +2,9 @@ package framework
 
 import (
 	"context"
-	"errors"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 	"nevissGo/ent"
 	"slices"
@@ -72,21 +70,21 @@ func (a *App) ServeEndpoints() error {
 	e.Use(middleware.Recover())
 
 	e.HTTPErrorHandler = func(err error, c echo.Context) {
+		code := ExtErrorCode(err)
+		message := ExtErrorMessage(err)
+		fields := ExtErrorFields(err)
 
-		// if error as validator.ValidationErrors
-		var errs validator.ValidationErrors
-		if errors.As(err, &errs) {
-			c.JSON(400, map[string]any{
-				"fields": lo.Map(errs, func(err validator.FieldError, _ int) string {
-					return err.Error()
-				}),
-			})
-			return
+		response := map[string]any{
+			"ok":         false,
+			"error_code": code,
+			"message":    message,
 		}
 
-		logrus.WithError(err).Error("internal server error")
+		if fields != nil {
+			response["fields"] = fields
+		}
 
-		c.String(500, "internal server error")
+		c.JSON(200, response)
 	}
 
 	for _, middlewareFunc := range a.endpoints.middlewares {

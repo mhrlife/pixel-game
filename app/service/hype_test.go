@@ -1,15 +1,15 @@
-// app/service/hype_test.go
 package service
 
 import (
 	"context"
-	"github.com/stretchr/testify/suite"
 	"nevissGo/ent"
 	hype2 "nevissGo/ent/hype"
 	"nevissGo/ent/user"
 	"nevissGo/framework"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/suite"
 )
 
 type HypeSuite struct {
@@ -75,7 +75,7 @@ func (s *HypeSuite) TestUseHype_CreateHype() {
 	s.Equal(0, count)
 
 	err = s.app.TX(s.ctx, func(tx *ent.Tx) error {
-		return s.service.UseHypeTX(s.ctx, tx, s.user.ID, 40)
+		return s.service.UseHypeTX(s.ctx, tx, s.user.ID, 2)
 	})
 	s.NoError(err)
 
@@ -84,8 +84,8 @@ func (s *HypeSuite) TestUseHype_CreateHype() {
 		Where(hype2.HasUserWith(user.IDEQ(s.user.ID))).
 		Only(s.ctx)
 	s.NoError(err)
-	s.Equal(60, hype.AmountRemaining)
-	s.Equal(100, hype.MaxHype)
+	s.Equal(8, hype.AmountRemaining)
+	s.Equal(10, hype.MaxHype)
 }
 
 func (s *HypeSuite) TestUseHype_UserNotFound() {
@@ -95,7 +95,7 @@ func (s *HypeSuite) TestUseHype_UserNotFound() {
 		return s.service.UseHypeTX(s.ctx, tx, nonExistentUserID, 10)
 	})
 	s.Error(err)
-	s.Contains(err.Error(), "user with ID")
+	s.Equal(400, framework.ExtErrorCode(err))
 }
 
 func (s *HypeSuite) TestUseHype_NotEnoughHype() {
@@ -115,7 +115,8 @@ func (s *HypeSuite) TestUseHype_NotEnoughHype() {
 		return s.service.UseHypeTX(s.ctx, tx, s.user.ID, 30)
 	})
 	s.Error(err)
-	s.Contains(err.Error(), "not enough hype remaining")
+	s.Equal(400, framework.ExtErrorCode(err))
+	s.Equal("not enough hype remaining", framework.ExtErrorMessage(err))
 
 	hype, err := s.app.Client().Hype.
 		Query().

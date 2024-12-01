@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 	"nevissGo/ent/pixel"
 	"testing"
 	"time"
@@ -114,7 +113,8 @@ func (s *PixelsSuite) TestUpdateColorCooldownNotExpired() {
 	err = s.service.UpdateColor(s.ctx, pixelID, "purple", s.user.ID)
 
 	s.Error(err)
-	s.Contains(err.Error(), "Pixel can only be updated every")
+	s.Equal(400, framework.ExtErrorCode(err))
+	s.Equal("Pixel can only be updated every "+s.cooldown.String(), framework.ExtErrorMessage(err))
 }
 
 func (s *PixelsSuite) TestUpdateColorInvalidPixelID() {
@@ -124,20 +124,22 @@ func (s *PixelsSuite) TestUpdateColorInvalidPixelID() {
 	err := s.service.UpdateColor(s.ctx, invalidPixelID, newColor, s.user.ID)
 
 	s.Error(err)
-	s.Contains(err.Error(), "out of bounds")
+	s.Equal(400, framework.ExtErrorCode(err))
+	s.Equal("Pixel ID is out of bounds", framework.ExtErrorMessage(err))
 }
 
 func (s *PixelsSuite) TestUpdateColorUseHypeFailure() {
 	pixelID := 4
 	newColor := "orange"
 
-	s.bridge.Hype.On("UseHypeTX", mock.Anything, mock.Anything, s.user.ID, 1).Return(errors.New("hype usage failed"))
+	s.bridge.Hype.On("UseHypeTX", mock.Anything, mock.Anything, s.user.ID, 1).Return(framework.NewInternalError("hype usage failed"))
 	defer s.bridge.Hype.AssertExpectations(s.T())
 
 	err := s.service.UpdateColor(s.ctx, pixelID, newColor, s.user.ID)
 
 	s.Error(err)
-	s.Contains(err.Error(), "hype usage failed")
+	s.Equal(500, framework.ExtErrorCode(err))
+	s.Equal("hype usage failed", framework.ExtErrorMessage(err))
 }
 
 func (s *PixelsSuite) TestGetBoard() {

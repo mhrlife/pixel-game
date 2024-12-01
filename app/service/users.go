@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+
 	"github.com/sirupsen/logrus"
 	"github.com/teris-io/shortid"
 	"nevissGo/ent"
@@ -22,17 +23,21 @@ func (s *Users) GetOrRegister(ctx context.Context, user *ent.User) error {
 	return s.app.TX(ctx, func(tx *ent.Tx) error {
 		existingUser, err := tx.User.Get(ctx, user.ID)
 		if ent.IsNotFound(err) {
-			user, err = tx.User.Create().
+			_, err = tx.User.Create().
 				SetID(user.ID).
 				SetDisplayName(user.DisplayName).
 				SetGameID(shortid.MustGenerate()).
 				Save(ctx)
-			return err
+			if err != nil {
+				logrus.WithError(err).Error("Failed to create user")
+				return framework.NewInternalError("Failed to create user")
+			}
+			return nil
 		}
 
 		if err != nil {
-			logrus.WithError(err).Error("failed to get service")
-			return err
+			logrus.WithError(err).Error("Failed to get user")
+			return framework.NewInternalError("Failed to get user")
 		}
 
 		user = existingUser

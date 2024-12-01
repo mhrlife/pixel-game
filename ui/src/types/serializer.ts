@@ -26,3 +26,10 @@ export interface BoardSerializer {
     width: number;
     height: number;
 }
+export interface HypeSerializer {
+    amount_remaining: number;
+    max_hype: number;
+    hype_per_second: number;
+    time_until_next_hype: number;
+    last_updated_at: string;
+}

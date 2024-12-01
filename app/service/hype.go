@@ -1,12 +1,9 @@
-// app/service/hype.go
 package service
 
 import (
 	"context"
 	"time"
 
-	"github.com/rotisserie/eris"
-	"github.com/sirupsen/logrus"
 	"nevissGo/ent"
 	"nevissGo/framework"
 )
@@ -21,58 +18,23 @@ func NewHype(app *framework.App) *Hype {
 	return &Hype{
 		app:            app,
 		client:         app.Client(),
-		defaultMaxHype: 100,
+		defaultMaxHype: 10,
 	}
 }
 
 func (h *Hype) UseHypeTX(ctx context.Context, tx *ent.Tx, userID int64, amount int) error {
-	user, err := tx.User.Get(ctx, userID)
+	hype, err := h.fetchOrCreateHype(ctx, tx.Client(), userID)
 	if err != nil {
-		if ent.IsNotFound(err) {
-			logrus.WithField("user_id", userID).Error("User not found")
-			return eris.Errorf("user with ID %d not found", userID)
-		}
-		logrus.WithError(err).WithField("user_id", userID).Error("Failed to get user")
-		return eris.Wrapf(err, "failed to get user with ID %d", userID)
+		return err
 	}
 
-	hype, err := user.QueryHype().Only(ctx)
-	if ent.IsNotFound(err) {
-		hype, err = tx.Hype.Create().
-			SetUser(user).
-			SetAmountRemaining(h.defaultMaxHype).
-			SetMaxHype(h.defaultMaxHype).
-			SetHypePerMinute(2).
-			SetLastUpdatedAt(time.Now()).
-			Save(ctx)
-		if err != nil {
-			logrus.WithError(err).WithField("user_id", userID).Error("Failed to create hype for user")
-			return eris.Wrap(err, "failed to create hype for user")
-		}
-	} else if err != nil {
-		logrus.WithError(err).WithField("user_id", userID).Error("Failed to query hype for user")
-		return eris.Wrap(err, "failed to query hype for user")
-	} else {
-		timeSinceUpdate := time.Since(hype.LastUpdatedAt)
-		minutesPassed := int(timeSinceUpdate.Minutes())
-		if minutesPassed > 0 {
-			replenished := minutesPassed * hype.HypePerMinute
-			newAmount := hype.AmountRemaining + replenished
-			if newAmount > hype.MaxHype {
-				newAmount = hype.MaxHype
-			}
-			hype.AmountRemaining = newAmount
-			hype.LastUpdatedAt = hype.LastUpdatedAt.Add(time.Duration(minutesPassed) * time.Minute)
-		}
+	err = h.updateHypeAmount(ctx, tx.Client(), hype)
+	if err != nil {
+		return err
 	}
 
 	if hype.AmountRemaining < amount {
-		logrus.WithFields(logrus.Fields{
-			"user_id":          userID,
-			"amount_required":  amount,
-			"amount_remaining": hype.AmountRemaining,
-		}).Warn("Not enough hype remaining for user")
-		return eris.New("not enough hype remaining")
+		return framework.NewValidationError("not enough hype remaining")
 	}
 
 	hype.AmountRemaining -= amount
@@ -83,15 +45,72 @@ func (h *Hype) UseHypeTX(ctx context.Context, tx *ent.Tx, userID int64, amount i
 		SetLastUpdatedAt(hype.LastUpdatedAt).
 		Save(ctx)
 	if err != nil {
-		logrus.WithError(err).WithField("user_id", userID).Error("Failed to update hype")
-		return eris.Wrap(err, "failed to update hype")
+		return framework.NewInternalError("Failed to update hype")
 	}
 
-	logrus.WithFields(logrus.Fields{
-		"user_id":          userID,
-		"amount_used":      amount,
-		"amount_remaining": hype.AmountRemaining,
-	}).Info("Hype used successfully")
+	return nil
+}
 
+func (h *Hype) GetHype(ctx context.Context, userID int64) (*ent.Hype, error) {
+	hype, err := h.fetchOrCreateHype(ctx, h.client, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	err = h.updateHypeAmount(ctx, h.client, hype)
+	if err != nil {
+		return nil, err
+	}
+
+	return hype, nil
+}
+
+func (h *Hype) fetchOrCreateHype(ctx context.Context, client *ent.Client, userID int64) (*ent.Hype, error) {
+	user, err := client.User.Get(ctx, userID)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, framework.NewValidationError("User not found")
+		}
+		return nil, framework.NewInternalError("Failed to get user")
+	}
+
+	hype, err := user.QueryHype().Only(ctx)
+	if ent.IsNotFound(err) {
+		hype, err = client.Hype.Create().
+			SetUser(user).
+			SetAmountRemaining(h.defaultMaxHype).
+			SetMaxHype(h.defaultMaxHype).
+			SetHypePerMinute(2).
+			SetLastUpdatedAt(time.Now()).
+			Save(ctx)
+		if err != nil {
+			return nil, framework.NewInternalError("Failed to create hype for user")
+		}
+	} else if err != nil {
+		return nil, framework.NewInternalError("Failed to query hype for user")
+	}
+
+	return hype, nil
+}
+
+func (h *Hype) updateHypeAmount(ctx context.Context, client *ent.Client, hype *ent.Hype) error {
+	timeSinceUpdate := time.Since(hype.LastUpdatedAt)
+	minutesPassed := int(timeSinceUpdate.Minutes())
+	if minutesPassed > 0 {
+		replenished := minutesPassed * hype.HypePerMinute
+		newAmount := hype.AmountRemaining + replenished
+		if newAmount > hype.MaxHype {
+			newAmount = hype.MaxHype
+		}
+		hype.AmountRemaining = newAmount
+		hype.LastUpdatedAt = hype.LastUpdatedAt.Add(time.Duration(minutesPassed) * time.Minute)
+		_, err := client.Hype.UpdateOne(hype).
+			SetAmountRemaining(hype.AmountRemaining).
+			SetLastUpdatedAt(hype.LastUpdatedAt).
+			Save(ctx)
+		if err != nil {
+			return framework.NewInternalError("Failed to update hype amount")
+		}
+	}
 	return nil
 }

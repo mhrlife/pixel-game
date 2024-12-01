@@ -14,6 +14,7 @@ import (
 	"nevissGo/framework"
 	"nevissGo/telegram"
 	"os"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -43,8 +44,16 @@ var serveCmd = &cobra.Command{
 			Addr: ":8001",
 		})
 
+		hypeService := service.NewHype(app)
+
+		bridge := service.Bridge{
+			Hype: hypeService,
+		}
+
 		app.RegisterEndpoints(
 			endpoint.NewUsers(service.NewUsers(app)),
+			endpoint.NewPixels(service.NewPixels(app, bridge, time.Minute, 40, 40, 1)),
+			endpoint.NewHype(hypeService),
 		)
 
 		// SETUP BOT

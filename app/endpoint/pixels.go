@@ -28,8 +28,8 @@ func (p *Pixels) Endpoints(router *framework.Endpoints) {
 }
 
 type UpdatePixelDto struct {
-	PixelID  int    `json:"pixel_id"`
-	NewColor string `json:"new_color"`
+	PixelID  int    `json:"pixel_id" validate:"required"`
+	NewColor string `json:"new_color" validate:"required"`
 }
 
 func (p *Pixels) UpdatePixel(c *framework.Context) error {
@@ -54,6 +54,5 @@ func (p *Pixels) GetBoard(c *framework.Context) error {
 	if err != nil {
 		return eris.Wrap(err, "failed to get board")
 	}
-	serializedBoard := serializer.NewBoard(board)
-	return c.Ok(serializedBoard)
+	return c.Ok(serializer.NewBoard(board))
 }

@@ -1,8 +1,8 @@
-
+/* ui/src/pages/Board.module.css */
 .Board {
     background: black;
     height: 96vw;
-    margin-top: 5vh;
+    margin-top: 2vw;
     width: 96vw;
     margin-right: 2vw;
 
@@ -28,4 +28,20 @@
     transform: scale(1.5);
     z-index: 10;
     border: 1px black solid;
+}
+
+
+.HypeInfo {
+    width: 96vw;
+    background: #795757;
+    color: white;
+    padding: 1vh;
+    margin: 4vh 2vw 2vw;
+    border-radius: 0.5vh;
+}
+
+.Countdown {
+    margin-top: 1vh;
+    font-size: 1rem;
+    text-align: center;
 }

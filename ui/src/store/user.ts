@@ -1,22 +1,32 @@
 import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
 import {EmptyHTTPAction, HTTPAction} from "./types.ts";
-import {useAPI} from "../api/useAPI.tsx";
-import {UserWithToken} from "../types/serializer.ts";
+import {useApi} from "../api/useApi.tsx";
+import {HypeSerializer, UserWithToken} from "../types/serializer.ts";
 
 export const loginUser = createAsyncThunk(
     'users/login',
     async () => {
-        const api = useAPI();
+        const api = useApi();
         return await api.login();
+    }
+)
+
+export const fetchUserHype = createAsyncThunk(
+    'users/fetchHype',
+    async () => {
+        const api = useApi();
+        return await api.getHype();
     }
 )
 
 type userState = {
     auth: HTTPAction<UserWithToken>;
+    hype: HTTPAction<HypeSerializer>;
 }
 
 const initialState: userState = {
-    auth: EmptyHTTPAction<UserWithToken>('LOADING')
+    auth: EmptyHTTPAction<UserWithToken>('LOADING'),
+    hype: EmptyHTTPAction<HypeSerializer>('IDLE')
 }
 
 export const userSlice = createSlice({
@@ -35,8 +45,18 @@ export const userSlice = createSlice({
             state.auth.state = 'ERROR'
             console.log("error is ", action.error);
         });
+        builder.addCase(fetchUserHype.pending, (state) => {
+            state.hype.state = 'LOADING'
+        });
+        builder.addCase(fetchUserHype.fulfilled, (state, action) => {
+            state.hype.state = 'SUCCESS'
+            state.hype.value = action.payload;
+        });
+        builder.addCase(fetchUserHype.rejected, (state, action) => {
+            state.hype.state = 'ERROR'
+            console.log("error is ", action.error);
+        });
     }
 })
-
 
 export default userSlice.reducer

@@ -16,6 +16,7 @@ var tsCmd = &cobra.Command{
 			Add(serializer.PixelSerializer{}).
 			Add(serializer.PixelWithUserSerializer{}).
 			Add(serializer.BoardSerializer{}).
+			Add(serializer.HypeSerializer{}).
 			WithInterface(true)
 		err := converter.ConvertToFile("./ui/src/types/serializer.ts")
 		if err != nil {

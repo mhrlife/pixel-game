@@ -5,9 +5,11 @@ import {Color, Colors, colorToHex} from "../types/colors.ts";
 import {useEffect, useState} from "react";
 import {Button} from "./Typo.tsx";
 
-export function EditForm({selected, onCancel}: {
+export function EditForm({selected, onCancel, onSubmitted, isLoading}: {
     selected: number;
     onCancel: () => void;
+    onSubmitted: (color: Color) => void;
+    isLoading: boolean;
 }) {
 
     const [selectedColor, setSelectedColor] = useState<Color | null>(null);
@@ -29,6 +31,8 @@ export function EditForm({selected, onCancel}: {
                                       onClick={() => setSelectedColor(color)}
                                       style={{backgroundColor: colorToHex(color)}}/>)}
         </div>
-        {selectedColor && <Button onClick={onCancel} fullWidth={true} size={'m'}>تایید و رنگ زدن</Button>}
+        {selectedColor &&
+            <Button onClick={() => onSubmitted(selectedColor)} loading={isLoading} fullWidth={true} size={'m'}>تایید و
+                رنگ زدن</Button>}
     </div>
 }

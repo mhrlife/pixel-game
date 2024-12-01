@@ -4,16 +4,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/rotisserie/eris"
 	"github.com/sirupsen/logrus"
 	"nevissGo/ent"
 	"nevissGo/framework"
 )
 
 type Pixels struct {
-	app    *framework.App
-	bridge Bridge
-
+	app           *framework.App
+	bridge        Bridge
 	cooldown      time.Duration
 	width, height int
 	drawHypeCost  int
@@ -22,6 +20,7 @@ type Pixels struct {
 func NewPixels(
 	app *framework.App,
 	bridge Bridge,
+
 	cooldown time.Duration,
 	width, height int,
 	drawHypeCost int,
@@ -44,7 +43,7 @@ func (s *Pixels) UpdateColor(ctx context.Context, pixelID int, newColor string, 
 			"width":    s.width,
 			"height":   s.height,
 		}).Error("Pixel ID is out of bounds")
-		return eris.Errorf("Pixel ID %d is out of bounds (0 to %d)", pixelID, s.width*s.height-1)
+		return framework.NewValidationError("Pixel ID is out of bounds")
 	}
 
 	return s.app.TX(ctx, func(tx *ent.Tx) error {
@@ -57,7 +56,7 @@ func (s *Pixels) UpdateColor(ctx context.Context, pixelID int, newColor string, 
 		}
 		if err != nil {
 			logrus.WithError(err).WithField("pixel_id", pixelID).Error("Failed to retrieve pixel")
-			return eris.Wrapf(err, "failed to retrieve pixel with ID %d", pixelID)
+			return framework.NewInternalError("Failed to retrieve pixel")
 		}
 		if err := s.ensureCooldown(pixel); err != nil {
 			return err
@@ -80,7 +79,7 @@ func (s *Pixels) createPixel(tx *ent.Tx, ctx context.Context, pixelID int, newCo
 			"width":    s.width,
 			"height":   s.height,
 		}).Error("Pixel ID is out of bounds")
-		return eris.Errorf("Pixel ID %d is out of bounds (0 to %d)", pixelID, s.width*s.height-1)
+		return framework.NewValidationError("Pixel ID is out of bounds")
 	}
 	_, err := tx.Pixel.Create().
 		SetID(pixelID).
@@ -90,7 +89,7 @@ func (s *Pixels) createPixel(tx *ent.Tx, ctx context.Context, pixelID int, newCo
 		Save(ctx)
 	if err != nil {
 		logrus.WithError(err).WithField("pixel_id", pixelID).Error("Failed to create pixel")
-		return eris.Wrapf(err, "failed to create pixel with ID %d", pixelID)
+		return framework.NewInternalError("Failed to create pixel")
 	}
 	logrus.WithFields(logrus.Fields{
 		"pixel_id":  pixelID,
@@ -108,7 +107,7 @@ func (s *Pixels) ensureCooldown(pixel *ent.Pixel) error {
 			"time_since_update": timeSinceUpdate.Seconds(),
 			"cooldown_secs":     s.cooldown.Seconds(),
 		}).Warn("Attempt to update pixel too soon")
-		return eris.Errorf("Pixel can only be updated every %s", s.cooldown)
+		return framework.NewValidationError("Pixel can only be updated every " + s.cooldown.String())
 	}
 	return nil
 }
@@ -121,7 +120,9 @@ func (s *Pixels) updateExistingPixel(tx *ent.Tx, ctx context.Context, pixel *ent
 		Save(ctx)
 	if err != nil {
 		logrus.WithError(err).WithField("pixel_id", pixel.ID).Error("Failed to update pixel color")
-		return eris.Wrapf(err, "failed to update color for pixel with ID %d", pixel.ID)
+		return framework.NewInternalError("Failed to update pixel color").WithFields(logrus.Fields{
+			"pixel_id": pixel.ID,
+		})
 	}
 	logrus.WithFields(logrus.Fields{
 		"pixel_id":  pixel.ID,
@@ -145,7 +146,7 @@ func (s *Pixels) GetBoard(ctx context.Context) (*Board, error) {
 
 	pixels, err := s.app.Client().Pixel.Query().WithUser().All(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to retrieve pixels")
+		return nil, framework.NewInternalError("Failed to retrieve pixels")
 	}
 
 	board.Pixels = make([]*ent.Pixel, s.width*s.height)

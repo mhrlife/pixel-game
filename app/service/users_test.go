@@ -2,10 +2,11 @@ package service
 
 import (
 	"context"
+	"testing"
+
 	"github.com/stretchr/testify/suite"
 	"nevissGo/ent"
 	"nevissGo/framework"
-	"testing"
 )
 
 type UsersSuite struct {
@@ -33,7 +34,6 @@ func (s *UsersSuite) TestGetOrRegister() {
 	err := s.service.GetOrRegister(s.ctx, user)
 	s.NoError(err)
 
-	// Check that the service was created
 	createdUser, err := s.app.Client().User.Get(s.ctx, user.ID)
 	s.NoError(err)
 	s.Equal(user.ID, createdUser.ID)
@@ -44,8 +44,8 @@ func (s *UsersSuite) TestGetOrRegister() {
 	err = s.service.GetOrRegister(s.ctx, user)
 	s.NoError(err)
 
-	// Check that the service was updated
 	updatedUser, err := s.app.Client().User.Get(s.ctx, user.ID)
 	s.NoError(err)
 	s.Equal(user.ID, updatedUser.ID)
+	s.Equal("1", updatedUser.DisplayName)
 }

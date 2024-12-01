@@ -16,3 +16,6 @@ serve:
 
 ts:
 	go run main.go ts
+
+test:
+	go test -v ./...
