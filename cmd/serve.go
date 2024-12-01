@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"context"
+	"github.com/centrifugal/gocent/v3"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -40,9 +41,18 @@ var serveCmd = &cobra.Command{
 		logrus.Info("mysql connection established")
 
 		// SETUP APP
-		app := framework.NewApp(client, framework.Config{
-			Addr: ":8001",
-		})
+		app := framework.NewApp(
+			client,
+			framework.NewCentrifugoClient(
+				gocent.New(gocent.Config{
+					Addr: os.Getenv("CENTRIFUGO_ADDR_API"),
+					Key:  os.Getenv("CENTRIFUGO_SECRET_KEY"),
+				}),
+			),
+			framework.Config{
+				Addr: ":8001",
+			},
+		)
 
 		hypeService := service.NewHype(app)
 
@@ -54,6 +64,7 @@ var serveCmd = &cobra.Command{
 			endpoint.NewUsers(service.NewUsers(app)),
 			endpoint.NewPixels(service.NewPixels(app, bridge, time.Minute, 40, 40, 1)),
 			endpoint.NewHype(hypeService),
+			endpoint.NewOnlineUsers(service.NewOnlineUsers(app)),
 		)
 
 		// SETUP BOT

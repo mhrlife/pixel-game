@@ -1,6 +1,8 @@
+// app/serializer/hype.go
 package serializer
 
 import (
+	"math"
 	"nevissGo/ent"
 	"time"
 )
@@ -17,11 +19,17 @@ func NewHype(hype *ent.Hype) *HypeSerializer {
 	hypePerSecond := float64(hype.HypePerMinute) / 60.0
 
 	timeSinceUpdate := time.Since(hype.LastUpdatedAt)
-	secondsSinceUpdate := int(timeSinceUpdate.Seconds())
-	secondsPerHype := 60 / hype.HypePerMinute
+	secondsSinceUpdate := timeSinceUpdate.Seconds()
+	secondsPerHype := 60.0 / float64(hype.HypePerMinute)
 
-	remainingSeconds := secondsPerHype - (secondsSinceUpdate % secondsPerHype)
-	if remainingSeconds == secondsPerHype {
+	remainingSecondsFloat := secondsPerHype - math.Mod(secondsSinceUpdate, secondsPerHype)
+	if remainingSecondsFloat == secondsPerHype {
+		remainingSecondsFloat = 0
+	}
+	remainingSeconds := int(math.Ceil(remainingSecondsFloat))
+
+	// Set TimeUntilNextHype to 0 if AmountRemaining is at or above MaxHype
+	if hype.AmountRemaining >= hype.MaxHype {
 		remainingSeconds = 0
 	}
 

@@ -20,13 +20,14 @@ type Config struct {
 
 type App struct {
 	config Config
+	Event  Centrifugo
 
 	client    *ent.Client
 	endpoints *Endpoints
 	validate  *validator.Validate
 }
 
-func NewApp(client *ent.Client, config Config) *App {
+func NewApp(client *ent.Client, cent Centrifugo, config Config) *App {
 	validate := validator.New()
 
 	app := &App{
@@ -34,6 +35,7 @@ func NewApp(client *ent.Client, config Config) *App {
 		client:    client,
 		endpoints: &Endpoints{endpoints: make(map[string]EndpointHandler)},
 		validate:  validate,
+		Event:     cent,
 	}
 
 	if err := validate.RegisterValidation("action", func(fl validator.FieldLevel) bool {

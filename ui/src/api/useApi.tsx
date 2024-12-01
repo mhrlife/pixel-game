@@ -48,6 +48,10 @@ export function useApi() {
         },
         async getHype() {
             return await call<HypeSerializer>("hype/count", {});
+        },
+        async getOnlineUsersCount() {
+            return await call<number>("online_users/count", {});
         }
     }
 }
+

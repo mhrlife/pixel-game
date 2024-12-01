@@ -1,4 +1,4 @@
-import React, {CSSProperties} from "react";
+import {CSSProperties} from "react";
 
 export interface RowProps {
     align: 'center' | 'flex-start' | 'flex-end' | 'stretch' | 'baseline';
@@ -6,8 +6,9 @@ export interface RowProps {
     direction?: 'row' | 'column';
     gap?: string;
     lineHeight?: string;
+    style?: CSSProperties;
 
-    children: JSX.Element | JSX.Element[];
+    children: JSX.Element | (JSX.Element | false)[];
 }
 
 export function Row({
@@ -17,10 +18,12 @@ export function Row({
                         gap = "1vh",
                         children,
                         lineHeight,
+                        style
                     }: RowProps) {
 
-    const style: CSSProperties = {
+    style = {
         "display": "flex",
+        ...style,
     };
 
     style["alignItems"] = align;

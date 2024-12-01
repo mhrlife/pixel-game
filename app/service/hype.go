@@ -95,15 +95,16 @@ func (h *Hype) fetchOrCreateHype(ctx context.Context, client *ent.Client, userID
 
 func (h *Hype) updateHypeAmount(ctx context.Context, client *ent.Client, hype *ent.Hype) error {
 	timeSinceUpdate := time.Since(hype.LastUpdatedAt)
-	minutesPassed := int(timeSinceUpdate.Minutes())
-	if minutesPassed > 0 {
-		replenished := minutesPassed * hype.HypePerMinute
+	hypePerSecond := float64(hype.HypePerMinute) / 60.0
+	secondsPassed := timeSinceUpdate.Seconds()
+	replenished := int(secondsPassed * hypePerSecond)
+	if replenished > 0 {
 		newAmount := hype.AmountRemaining + replenished
 		if newAmount > hype.MaxHype {
 			newAmount = hype.MaxHype
 		}
 		hype.AmountRemaining = newAmount
-		hype.LastUpdatedAt = hype.LastUpdatedAt.Add(time.Duration(minutesPassed) * time.Minute)
+		hype.LastUpdatedAt = hype.LastUpdatedAt.Add(time.Duration(float64(time.Second) * float64(replenished) / hypePerSecond))
 		_, err := client.Hype.UpdateOne(hype).
 			SetAmountRemaining(hype.AmountRemaining).
 			SetLastUpdatedAt(hype.LastUpdatedAt).
