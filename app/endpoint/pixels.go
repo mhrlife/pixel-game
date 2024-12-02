@@ -2,6 +2,7 @@
 package endpoint
 
 import (
+	"context"
 	"github.com/rotisserie/eris"
 	"github.com/sirupsen/logrus"
 	"nevissGo/app/serializer"
@@ -28,7 +29,7 @@ func (p *Pixels) Endpoints(router *framework.Endpoints) {
 }
 
 type UpdatePixelDto struct {
-	PixelID  int    `json:"pixel_id" validate:"required"`
+	PixelID  int    `json:"pixel_id"`
 	NewColor string `json:"new_color" validate:"required"`
 }
 
@@ -46,7 +47,17 @@ func (p *Pixels) UpdatePixel(c *framework.Context) error {
 		}).Error("Failed to update pixel color")
 		return eris.Wrap(err, "failed to update pixel color")
 	}
-	return c.Ok("Pixel color updated successfully")
+
+	board, err := p.service.GetBoard(c.Request().Context())
+	if err != nil {
+		return eris.Wrap(err, "failed to get board")
+	}
+
+	go func() {
+		c.App.Event.Broadcast(context.Background(), "board:updated", serializer.NewBoardUpdatedSerializer(board, c.User))
+	}()
+
+	return c.Ok("Pixel updated")
 }
 
 func (p *Pixels) GetBoard(c *framework.Context) error {

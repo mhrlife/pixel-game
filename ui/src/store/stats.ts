@@ -1,20 +1,13 @@
 import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
 import {useApi} from '../api/useApi.tsx';
+import {EmptyHTTPAction, HTTPAction, HTTPError} from "./types.ts";
 
 interface StatsState {
-    onlineUsers: {
-        state: 'IDLE' | 'LOADING' | 'SUCCESS' | 'ERROR';
-        value: number | null;
-        error: string | null;
-    };
+    onlineUsers: HTTPAction<number>;
 }
 
 const initialState: StatsState = {
-    onlineUsers: {
-        state: 'IDLE',
-        value: null,
-        error: null,
-    },
+    onlineUsers: EmptyHTTPAction<number>('IDLE'),
 };
 
 export const fetchOnlineUsersCount = createAsyncThunk<number, void>(
@@ -32,7 +25,6 @@ const statsSlice = createSlice({
     extraReducers: (builder) => {
         builder.addCase(fetchOnlineUsersCount.pending, (state) => {
             state.onlineUsers.state = 'LOADING';
-            state.onlineUsers.error = null;
         });
         builder.addCase(fetchOnlineUsersCount.fulfilled, (state, action) => {
             state.onlineUsers.state = 'SUCCESS';
@@ -40,7 +32,7 @@ const statsSlice = createSlice({
         });
         builder.addCase(fetchOnlineUsersCount.rejected, (state, action) => {
             state.onlineUsers.state = 'ERROR';
-            state.onlineUsers.error = action.payload as string;
+            state.onlineUsers.error = action.error as HTTPError;
         });
     },
 });

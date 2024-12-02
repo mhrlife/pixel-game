@@ -1,11 +1,13 @@
 import {configureStore} from "@reduxjs/toolkit";
 import userReducers from "./user.ts"
+import statsReducers from "./stats.ts"
 import {useDispatch, useSelector} from "react-redux";
 
 
 export const store = configureStore({
     reducer: {
-        user: userReducers
+        user: userReducers,
+        stats: statsReducers,
     }
 })
 

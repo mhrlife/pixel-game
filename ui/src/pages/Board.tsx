@@ -1,4 +1,3 @@
-// ui/src/pages/Board.tsx
 import styles from './Board.module.css'
 import classNames from "classnames";
 import {useCallback, useEffect, useState} from "react";
@@ -6,7 +5,7 @@ import {useDetectClickOutside} from "react-detect-click-outside";
 import {EditForm} from "../components/EditForm.tsx";
 import {Color, colorToHex} from "../types/colors.ts";
 import {useApi} from "../api/useApi.tsx";
-import {BoardSerializer} from "../types/serializer.ts";
+import {BoardSerializer, UpdatedBoardSerializer} from "../types/serializer.ts";
 import {fetchUserHype} from "../store/user.ts";
 import {useAppDispatch, useAppSelector} from "../store/store.ts";
 import {CenterRow, Row} from "../components/Grid.tsx";
@@ -14,12 +13,35 @@ import {useCurrentUser} from "../hooks/user.ts";
 import {Paragraph} from "../components/Typo.tsx";
 import {forceFarsiNumbers} from "../utils.ts";
 import {FaFire} from "react-icons/fa";
+import {BoardUpdateInfo} from "../components/BoardUpdateInfo.tsx";
+import {useSubscription} from "../context/centrifuge.tsx";
 
 export default function Board() {
     const [selected, setSelected] = useState<number | null>(null);
     const api = useApi();
     const [board, setBoard] = useState<BoardSerializer | null>(null);
     const currentUser = useCurrentUser();
+
+
+    const [lastUpdatedAt, setLastUpdatedAt] = useState<UpdatedBoardSerializer | null>(null);
+    const boardUpdateSig = useSubscription<UpdatedBoardSerializer>("board:updated")
+
+    useEffect(() => {
+        if (!boardUpdateSig)
+            return;
+
+        if (!boardUpdateSig.board?.updated_at)
+            return;
+
+        if (board?.updated_at && board?.updated_at > boardUpdateSig.board?.updated_at)
+            return;
+
+        if (lastUpdatedAt?.board?.updated_at && lastUpdatedAt.board?.updated_at > boardUpdateSig.board?.updated_at)
+            return;
+
+        setLastUpdatedAt(boardUpdateSig);
+        setBoard(boardUpdateSig.board);
+    }, [board?.updated_at, boardUpdateSig, lastUpdatedAt]);
 
     const [isLoading, setIsLoading] = useState(false);
     const [countdown, setCountdown] = useState<number | null>(null);
@@ -68,7 +90,7 @@ export default function Board() {
     }, [countdown, updateHype]);
 
     const handleSetPixel = useCallback((color: Color) => {
-        if (!selected) return;
+        if (selected === null) return;
 
         setIsLoading(true)
         api.setPixel(selected, color).then(() => updateBoard()).finally(() => {
@@ -138,8 +160,10 @@ export default function Board() {
             )}
         </div>
 
-        {selected && <EditForm onCancel={handleOnCancel} onSubmitted={handleSetPixel} isLoading={isLoading}
+        {selected !== null && <EditForm onCancel={handleOnCancel} onSubmitted={handleSetPixel} isLoading={isLoading}
                                selected={selected}/>}
+
+        {selected === null && <BoardUpdateInfo boardUpdate={lastUpdatedAt}/>}
     </div>
 }
 
@@ -149,12 +173,31 @@ export function BoardItem({color, selected = false, onClick}: {
     onClick?: () => void;
 
 }) {
+    const [changed, setChanged] = useState(false);
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        if(!mounted){
+            setMounted(true);
+            return;
+        }
+
+        setChanged(true);
+
+        const timer = setTimeout(() => {
+            setChanged(false);
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [color]);
+
     const style = {
         backgroundColor: colorToHex(color)
     }
 
     return <div className={classNames(styles.BoardItem, {
-        [styles.Selected]: selected
+        [styles.Selected]: selected,
+        [styles.Changed]: changed,
     })}
                 style={style}
                 onClick={onClick}

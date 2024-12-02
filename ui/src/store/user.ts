@@ -40,6 +40,7 @@ export const userSlice = createSlice({
         builder.addCase(loginUser.fulfilled, (state, action) => {
             state.auth.state = 'SUCCESS'
             state.auth.value = action.payload;
+            localStorage.setItem('pixel_jwt', action.payload.token);
         });
         builder.addCase(loginUser.rejected, (state, action) => {
             state.auth.state = 'ERROR'

@@ -26,6 +26,6 @@ func (e *OnlineUsers) GetOnlineUsersCount(c *framework.Context) error {
 	if err != nil {
 		return err
 	}
-	
+
 	return c.Ok(count)
 }

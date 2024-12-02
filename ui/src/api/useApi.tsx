@@ -5,14 +5,14 @@ import { BoardSerializer, UserWithToken, HypeSerializer } from "../types/seriali
 async function call<T>(action: string, data: any) {
     let token = localStorage.getItem("pixel_jwt") || '';
 
-    if (!token) {
+    if (!token || token === "undefined") {
         try {
             token = "INIT_DATA:" + getInitData()
         } catch {
             throw new Error("No token found");
         }
     } else {
-        token = "JWT:" + getInitData();
+        token = "JWT:" + token;
     }
 
     const result = await fetch("/api/call", {

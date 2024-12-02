@@ -12,6 +12,7 @@
   "dependencies": {
     "@reduxjs/toolkit": "^2.4.0",
     "@telegram-apps/sdk-react": "^2.0.13",
+    "centrifuge": "^5.2.2",
     "classnames": "^2.5.1",
     "react": "^18.3.1",
     "react-detect-click-outside": "^1.1.7",

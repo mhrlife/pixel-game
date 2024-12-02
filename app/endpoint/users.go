@@ -17,6 +17,7 @@ import (
 	"nevissGo/pkg/jsonhelper"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -40,6 +41,12 @@ func (u *Users) Endpoints(router *framework.Endpoints) {
 			authKey := c.Request().Header.Get("Authorization")
 			if strings.Contains(authKey, "INIT_DATA:") {
 				initData := strings.Replace(authKey, "INIT_DATA:", "", 1)
+
+				fmt.Println(initData)
+				
+				if initData == "TEST_TOKEN" {
+					initData = os.Getenv("TEST_TOKEN_REPLACE")
+				}
 
 				isValid, err := validateInitData(initData)
 				if err != nil {
@@ -70,11 +77,26 @@ func (u *Users) Endpoints(router *framework.Endpoints) {
 			}
 
 			if strings.Contains(authKey, "JWT:") {
-				jwt := strings.Replace(authKey, "JWT:", "", 1)
-				fmt.Println(jwt)
+				userJwt := strings.Replace(authKey, "JWT:", "", 1)
+				claims, err := validateToken(userJwt)
+				if err != nil {
+					logrus.WithError(err).Error("couldn't validate token")
+					return framework.NewUnauthorizedError("Unauthorized")
+				}
+
+				userID, _ := strconv.Atoi(fmt.Sprint(claims["sub"]))
+				user, err := u.service.Get(c.Request().Context(), int64(userID))
+				if err != nil {
+					logrus.WithError(err).Error("couldn't get telegram user")
+					return framework.NewUnauthorizedError("Unauthorized")
+				}
+
+				c.Set("user", *user)
+
+				return next(c)
 			}
 
-			return c.String(403, "Unauthorized")
+			return framework.NewUnauthorizedError("Unauthorized")
 		}
 	})
 }
@@ -139,4 +161,25 @@ func validateInitData(inputData string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func validateToken(tokenString string) (jwt.MapClaims, error) {
+	// Parse the token
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Check the signing method
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return []byte(os.Getenv("SECRET_KEY")), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Validate the token
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, framework.NewValidationError("Invalid token")
 }

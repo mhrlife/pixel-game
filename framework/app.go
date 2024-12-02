@@ -86,6 +86,14 @@ func (a *App) ServeEndpoints() error {
 			response["fields"] = fields
 		}
 
+		if code == 500 {
+			logrus.WithError(err).WithFields(logrus.Fields{
+				"code":    code,
+				"message": message,
+				"fields":  fields,
+			}).Error("Request failed")
+		}
+
 		c.JSON(200, response)
 	}
 

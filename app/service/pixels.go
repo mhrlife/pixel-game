@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -73,6 +74,7 @@ func (s *Pixels) getPixel(tx *ent.Tx, ctx context.Context, pixelID int) (*ent.Pi
 }
 
 func (s *Pixels) createPixel(tx *ent.Tx, ctx context.Context, pixelID int, newColor string, userID int64) error {
+	fmt.Println(pixelID)
 	if pixelID < 0 || pixelID >= s.width*s.height {
 		logrus.WithFields(logrus.Fields{
 			"pixel_id": pixelID,

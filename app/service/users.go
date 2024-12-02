@@ -44,3 +44,6 @@ func (s *Users) GetOrRegister(ctx context.Context, user *ent.User) error {
 		return nil
 	})
 }
+func (s *Users) Get(ctx context.Context, userID int64) (*ent.User, error) {
+	return s.app.Client().User.Get(ctx, userID)
+}

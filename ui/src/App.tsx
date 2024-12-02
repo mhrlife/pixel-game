@@ -3,6 +3,7 @@ import Layout from "./pages/Layout.tsx";
 import Board from "./pages/Board.tsx";
 import {Provider} from "react-redux";
 import {store} from "./store/store.ts";
+import {CentrifugeProvider} from "./context/centrifuge.tsx";
 
 
 const router = createBrowserRouter([
@@ -23,8 +24,9 @@ function App() {
 
     return (
         <Provider store={store}>
-            <RouterProvider router={router}>
-            </RouterProvider>
+            <CentrifugeProvider url={"/ws/connection/websocket"}>
+                <RouterProvider router={router}/>
+            </CentrifugeProvider>
         </Provider>
     )
 }
