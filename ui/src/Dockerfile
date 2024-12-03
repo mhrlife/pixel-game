@@ -1,5 +1,5 @@
 # ===== Stage 1: Build the React App =====
-FROM node:20-alpine AS builder
+FROM node:18-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -27,7 +27,7 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Copy custom Nginx configuration (optional)
 # If you have a custom nginx.conf, uncomment the following line and ensure the file exists
-# COPY nginx.conf /etc/nginx/nginx.conf
+COPY ./charts/nginx.conf /etc/nginx/nginx.conf
 
 # Expose port 80
 EXPOSE 80
