@@ -7,6 +7,9 @@ RUN apk update && apk add --no-cache git
 # Set working directory
 WORKDIR /app
 
+RUN go env -w GO111MODULE=on
+RUN go env -w GOPROXY=https://goproxy.cn,direct
+
 # Cache dependencies
 COPY go.mod go.sum ./
 RUN go mod download
@@ -28,7 +31,7 @@ WORKDIR /root/
 COPY --from=builder /app/app .
 
 # Expose the port your application listens on
-EXPOSE 8085
+EXPOSE 8001
 
 # Command to run the executable
 CMD ["./app serve"]
