@@ -1,37 +1,23 @@
-# ===== Stage 1: Build the Go Binary =====
-FROM golang:1.23-alpine AS builder
+FROM golang:1.23-alpine AS build
 
-# Install Git (required for some Go modules)
-RUN apk update && apk add --no-cache git
-
-# Set working directory
 WORKDIR /app
 
 RUN go env -w GO111MODULE=on
 RUN go env -w GOPROXY=https://goproxy.cn,direct
 
-# Cache dependencies
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the source code
-COPY . .
+COPY . ./
+RUN  CGO_ENABLED=0 go build -o main .
 
-# Build the Go binary
-# -ldflags="-s -w" strips the binary for smaller size
-RUN go build -o app -ldflags="-s -w" main.go
-
-# ===== Stage 2: Create the Final Image =====
+# Stage 2: Run the Go application
 FROM alpine:latest
 
-# Set working directory
 WORKDIR /root/
 
-# Copy the binary from the builder stage
-COPY --from=builder /app/app .
+COPY --from=build /app/main .
 
-# Expose the port your application listens on
-EXPOSE 8001
+EXPOSE 8080
 
-# Command to run the executable
-CMD ["./app serve"]
+CMD ["./main","serve"]
