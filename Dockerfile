@@ -18,6 +18,6 @@ WORKDIR /root/
 
 COPY --from=build /app/main .
 
-EXPOSE 8080
+EXPOSE 8001
 
 CMD ["./main","serve"]

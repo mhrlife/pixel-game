@@ -6,7 +6,6 @@ yarn-error.log
 
 # React
 build/
-public/
 
 # Golang
 /bin/
