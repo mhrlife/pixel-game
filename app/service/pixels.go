@@ -153,6 +153,10 @@ func (s *Pixels) GetBoard(ctx context.Context) (*Board, error) {
 
 	board.Pixels = make([]*ent.Pixel, s.width*s.height)
 	for _, pixel := range pixels {
+		if pixel.ID < 0 || pixel.ID >= s.width*s.height {
+			continue
+		}
+
 		board.Pixels[pixel.ID] = pixel
 	}
 

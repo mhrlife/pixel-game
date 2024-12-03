@@ -161,7 +161,7 @@ export default function Board() {
         </div>
 
         {selected !== null && <EditForm onCancel={handleOnCancel} onSubmitted={handleSetPixel} isLoading={isLoading}
-                               selected={selected}/>}
+                                        selected={selected}/>}
 
         {selected === null && <BoardUpdateInfo boardUpdate={lastUpdatedAt}/>}
     </div>
@@ -177,7 +177,7 @@ export function BoardItem({color, selected = false, onClick}: {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        if(!mounted){
+        if (!mounted) {
             setMounted(true);
             return;
         }
