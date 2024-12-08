@@ -1,3 +1,7 @@
+ifneq (,$(wildcard ./.env))
+    include .env
+    export
+endif
 
 generate:
 	go generate ./...
@@ -9,7 +13,7 @@ stop-docker:
 	docker compose -f ./docker-compose-local.yml down
 
 ngrok:
-	ngrok http --url=globally-live-crappie.ngrok-free.app 80
+	ngrok http --url=${NGROK_URL} 80
 
 serve:
 	go run main.go serve
