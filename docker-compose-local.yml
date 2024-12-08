@@ -8,16 +8,6 @@ services:
       - ./charts/centrifugo.json:/etc/centrifugo/config.json
     command: centrifugo --config /etc/centrifugo/config.json
 
-  nginx:
-    image: nginx:latest
-    network_mode: host
-    expose:
-      - 80
-    volumes:
-      - ./charts/nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - centrifugal
-
   mariadb:
     image: mariadb:latest
     container_name: neviss-mariadb
@@ -30,13 +20,5 @@ services:
     volumes:
       - pixel_mariadb_data:/var/lib/mysql
 
-  redis-stack:
-    image: redis/redis-stack-server:latest
-    container_name: neviss-redis-stack
-    network_mode: host
-    volumes:
-      - pixel_redis_stack_data:/data
-
 volumes:
   pixel_mariadb_data:
-  pixel_redis_stack_data:

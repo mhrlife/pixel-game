@@ -17,14 +17,16 @@ const router = createBrowserRouter([
             }
         ]
     }
-])
+], {
+    basename: import.meta.env.BASE_URL,
+})
 
 function App() {
 
 
     return (
         <Provider store={store}>
-            <CentrifugeProvider url={"/ws/connection/websocket"}>
+            <CentrifugeProvider url={"/pixel/events/connection/websocket"}>
                 <RouterProvider router={router}/>
             </CentrifugeProvider>
         </Provider>

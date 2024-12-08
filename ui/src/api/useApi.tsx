@@ -1,6 +1,6 @@
-import { getInitData } from "../hooks/telegram.ts";
-import { HTTPError } from "../store/types.ts";
-import { BoardSerializer, UserWithToken, HypeSerializer } from "../types/serializer.ts";
+import {getInitData} from "../hooks/telegram.ts";
+import {HTTPError} from "../store/types.ts";
+import {BoardSerializer, HypeSerializer, UserWithToken} from "../types/serializer.ts";
 
 async function call<T>(action: string, data: any) {
     let token = localStorage.getItem("pixel_jwt") || '';
@@ -15,7 +15,7 @@ async function call<T>(action: string, data: any) {
         token = "JWT:" + token;
     }
 
-    const result = await fetch("/api/call", {
+    const result = await fetch(import.meta.env.BASE_URL + "/api/call", {
         method: "POST",
         body: JSON.stringify({
             action,
@@ -44,7 +44,7 @@ export function useApi() {
             return await call<BoardSerializer>("pixels/board", {});
         },
         async setPixel(id: number, color: string) {
-            return await call<string>("pixels/update", { pixel_id: id, new_color: color });
+            return await call<string>("pixels/update", {pixel_id: id, new_color: color});
         },
         async getHype() {
             return await call<HypeSerializer>("hype/count", {});
