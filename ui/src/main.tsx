@@ -8,7 +8,7 @@ try {
     window.Telegram.WebApp.ready();
     window.Telegram.WebApp.expand();
     window.Telegram.WebApp.enableClosingConfirmation();
-    window.Telegram.WebApp.requestFullscreen();
+    window.Telegram.WebApp.disableVerticalSwipes()	;
 } catch (e) {
     console.log("test environment")
 }
