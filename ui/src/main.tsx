@@ -5,7 +5,10 @@ import App from './App.tsx'
 import {init} from "@telegram-apps/sdk-react";
 
 try {
-    init();
+    window.Telegram.WebApp.ready();
+    window.Telegram.WebApp.expand();
+    window.Telegram.WebApp.enableClosingConfirmation();
+    window.Telegram.WebApp.requestFullscreen();
 } catch (e) {
     console.log("test environment")
 }
