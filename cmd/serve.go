@@ -62,7 +62,7 @@ var serveCmd = &cobra.Command{
 
 		app.RegisterEndpoints(
 			endpoint.NewUsers(service.NewUsers(app)),
-			endpoint.NewPixels(service.NewPixels(app, bridge, time.Minute, 40, 40, 1)),
+			endpoint.NewPixels(service.NewPixels(app, bridge, time.Microsecond, 40, 40, 1)),
 			endpoint.NewHype(hypeService),
 			endpoint.NewOnlineUsers(service.NewOnlineUsers(app)),
 		)
