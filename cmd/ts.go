@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"github.com/mhrlife/tonference/internal/app/serializer"
 	"github.com/spf13/cobra"
 	"github.com/tkrajina/typescriptify-golang-structs/typescriptify"
+	"nevissGo/app/serializer"
 )
 
 var tsCmd = &cobra.Command{
@@ -13,7 +13,11 @@ var tsCmd = &cobra.Command{
 		converter := typescriptify.New().
 			Add(serializer.UserWithToken{}).
 			Add(serializer.User{}).
-			Add(serializer.RoomSerializer{}).
+			Add(serializer.PixelSerializer{}).
+			Add(serializer.PixelWithUserSerializer{}).
+			Add(serializer.BoardSerializer{}).
+			Add(serializer.HypeSerializer{}).
+			Add(serializer.UpdatedBoardSerializer{}).
 			WithInterface(true)
 		err := converter.ConvertToFile("./ui/src/types/serializer.ts")
 		if err != nil {

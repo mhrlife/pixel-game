@@ -1,6 +1,6 @@
 import React, {createContext, useContext, useEffect, useMemo, useState} from 'react';
 import {Centrifuge, ServerPublicationContext} from 'centrifuge';
-
+import {useAppSelector} from '../store/store';
 
 export interface CentrifugeContextValue {
     centrifuge: Centrifuge | null;
@@ -20,7 +20,7 @@ interface ServerEvent<T> {
 }
 
 export const CentrifugeProvider: React.FC<CentrifugeProviderProps> = ({url, children}) => {
-    const jwtToken = localStorage.getItem('tonference_jwt');
+    const jwtToken = useAppSelector(state => state.user?.auth?.value?.token);
 
     const [latestUpdate, setLatestUpdate] = useState<ServerEvent<any> | null>(null);
 

@@ -1,19 +1,23 @@
+/*
+Copyright © 2024 NAME HERE <EMAIL ADDRESS>
+*/
 package cmd
 
 import (
 	"context"
 	"github.com/centrifugal/gocent/v3"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
-	lksdk "github.com/livekit/server-sdk-go/v2"
-	"github.com/mhrlife/tonference/internal/app/endpoint"
-	"github.com/mhrlife/tonference/internal/app/service"
-	"github.com/mhrlife/tonference/internal/ent"
-	"github.com/mhrlife/tonference/internal/telegram"
-	"github.com/mhrlife/tonference/pkg/framework"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"nevissGo/app/endpoint"
+	"nevissGo/app/service"
+	"nevissGo/ent"
+	"nevissGo/framework"
+	"nevissGo/telegram"
 	"os"
+	"time"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // serveCmd represents the serve command
@@ -36,6 +40,7 @@ var serveCmd = &cobra.Command{
 
 		logrus.Info("mysql connection established")
 
+		// SETUP APP
 		app := framework.NewApp(
 			client,
 			framework.NewCentrifugoClient(
@@ -49,19 +54,20 @@ var serveCmd = &cobra.Command{
 			},
 		)
 
-		liveKitRoomService := lksdk.NewRoomServiceClient(
-			os.Getenv("LIVEKIT_HOST"),
-			os.Getenv("LIVEKIT_API_KEY"),
-			os.Getenv("LIVEKIT_API_SECRET"),
-		)
+		hypeService := service.NewHype(app)
 
-		tonferenceService := service.NewService(client, app, liveKitRoomService)
+		bridge := service.Bridge{
+			Hype: hypeService,
+		}
 
 		app.RegisterEndpoints(
-			endpoint.NewUsers(tonferenceService),
-			endpoint.NewRooms(tonferenceService),
+			endpoint.NewUsers(service.NewUsers(app)),
+			endpoint.NewPixels(service.NewPixels(app, bridge, time.Microsecond, 40, 40, 1)),
+			endpoint.NewHype(hypeService),
+			endpoint.NewOnlineUsers(service.NewOnlineUsers(app)),
 		)
 
+		// SETUP BOT
 		bot, err := telegram.NewTelegram()
 		if err != nil {
 			logrus.WithError(err).Fatal("failed creating telegram bot")

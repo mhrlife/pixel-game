@@ -1,8 +1,9 @@
 import {createBrowserRouter, RouterProvider} from "react-router";
 import Layout from "./pages/Layout.tsx";
-import {Meetings} from "@/pages/Meetings.tsx";
-import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
-import {Meeting} from "@/pages/Meeting.tsx";
+import Board from "./pages/Board.tsx";
+import {Provider} from "react-redux";
+import {store} from "./store/store.ts";
+import {CentrifugeProvider} from "./context/centrifuge.tsx";
 
 
 const router = createBrowserRouter([
@@ -12,11 +13,7 @@ const router = createBrowserRouter([
         children: [
             {
                 index: true,
-                element: <Meetings/>
-            },
-            {
-                path: "/meeting/:id",
-                element: <Meeting/>
+                element: <Board/>
             }
         ]
     }
@@ -24,21 +21,15 @@ const router = createBrowserRouter([
     basename: import.meta.env.BASE_URL,
 })
 
-const queryClient = new QueryClient({
-    defaultOptions: {
-        queries: {
-            refetchOnWindowFocus: false,
-        },
-    },
-});
-
 function App() {
+
+
     return (
-        <QueryClientProvider client={queryClient}>
-            {/*<CentrifugeProvider url={"/pixel/events/connection/websocket"}>*/}
-            <RouterProvider router={router}/>
-            {/*</CentrifugeProvider>*/}
-        </QueryClientProvider>
+        <Provider store={store}>
+            <CentrifugeProvider url={"/pixel/events/connection/websocket"}>
+                <RouterProvider router={router}/>
+            </CentrifugeProvider>
+        </Provider>
     )
 }
 
