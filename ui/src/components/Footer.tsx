@@ -1,22 +1,36 @@
-import styles from "./Footer.module.css"
-import {LuBookOpen, LuGift, LuPaintbrush2} from "react-icons/lu";
-import {useLocation} from "react-router";
+import {Placeholder} from "@/components/ui/placeholder.tsx";
+import {ReactNode} from "react";
+import {RiBookOpenLine, RiSettings2Line, RiTelegram2Line} from "react-icons/ri";
+import {Separator} from "@/components/ui/separator.tsx";
+import classNames from "classnames";
+import {useNavigate} from "react-router";
+
 
 export function Footer() {
-    return <div className={styles.Footer}>
-        <FooterItem title={"جایزه"} icon={<LuGift/>} url={"/gift"}/>
-        <FooterItem title={"نقاشی کن"} icon={<LuPaintbrush2/>} url={"/"}/>
-        <FooterItem title={"آموزش"} icon={<LuBookOpen/>} url={"/learn"}/>
-    </div>
+    const navigate = useNavigate();
+
+    return <Placeholder className="bg-tg-bg py-6 flex items-center justify-center h-[10vh] gap-4">
+        <FooterItem icon={<RiSettings2Line size={24}/>} label={"Settings"}/>
+        <Separator orientation={'vertical'}/>
+        <FooterItem icon={<RiTelegram2Line size={24}/>} label={"Meetings"} active={true} onClick={() => navigate("/")}/>
+        <Separator orientation={'vertical'}/>
+        <FooterItem icon={<RiBookOpenLine size={24}/>} label={"Help"}/>
+    </Placeholder>
 }
 
-function FooterItem({title, icon, url}: { title: string, icon: JSX.Element, url: string }) {
-    const location = useLocation();
 
-    return (
-        <div className={styles.Item} data-active={location.pathname === url}>
-            {icon}
-            <p>{title}</p>
-        </div>
-    )
+interface FooterItemProps extends React.HTMLAttributes<HTMLDivElement> {
+    icon: ReactNode,
+    label: string,
+    active?: boolean
+}
+
+function FooterItem({icon, label, active = false, ...extras}: FooterItemProps) {
+    return <div className={classNames({
+        'flex flex-col items-center justify-center text-sm gap-0.5 py-1 px-2': true,
+        'text-muted': !active,
+    })} {...extras}>
+        {icon}
+        {label}
+    </div>
 }

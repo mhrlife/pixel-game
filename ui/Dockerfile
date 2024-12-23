@@ -9,7 +9,7 @@ RUN npm run build
 
 FROM nginx:alpine
 RUN mkdir /app
-COPY --from=builder /app/dist /usr/share/nginx/html/pixel
+COPY --from=builder /internal/app/dist /usr/share/nginx/html/tonference
 
 EXPOSE 80
 COPY nginx.conf /etc/nginx/conf.d/default.conf

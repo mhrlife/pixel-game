@@ -10,15 +10,14 @@ services:
 
   mariadb:
     image: mariadb:latest
-    container_name: neviss-mariadb
     environment:
       MYSQL_ROOT_PASSWORD: mamad
-      MYSQL_DATABASE: pixel
+      MYSQL_DATABASE: tonference
       MYSQL_USER: mamad
       MYSQL_PASSWORD: mamad
     network_mode: host
     volumes:
-      - pixel_mariadb_data:/var/lib/mysql
+      - tonference_mariadb_data:/var/lib/mysql
 
 volumes:
-  pixel_mariadb_data:
+  tonference_mariadb_data:

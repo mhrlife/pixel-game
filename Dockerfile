@@ -16,7 +16,7 @@ FROM alpine:latest
 
 WORKDIR /root/
 
-COPY --from=build /app/main .
+COPY --from=build /internal/app/main .
 
 EXPOSE 8001
 

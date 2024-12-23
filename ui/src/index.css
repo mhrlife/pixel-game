@@ -1,32 +1,38 @@
-* {
-    padding: 0;
-    margin: 0;
-    direction: rtl;
-    box-sizing: border-box;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
-    font-family: Ravi NoEn, serif;
-    font-size: 1.6vh;
+    --tg-theme-bg-color: #ffffff; /* Fallback */
+    --tg-theme-text-color: #000000;
+    --tg-theme-hint-color: #999999;
+    --tg-theme-link-color: #2c99e8;
+    --tg-theme-button-color: #2c99e8;
+    --tg-theme-button-text-color: #ffffff;
+    --tg-theme-secondary-bg-color: #f0f0f0;
+    --tg-theme-header-bg-color: #f4f4f4;
+    --tg-theme-bottom-bar-bg-color: #ffffff;
+    --tg-theme-accent-text-color: #0077ff;
+    --tg-theme-section-bg-color: #f7f7f7;
+    --tg-theme-section-header-text-color: #333333;
+    --tg-theme-section-separator-color: #dddddd;
+    --tg-theme-subtitle-text-color: #666666;
+    --tg-theme-destructive-text-color: #ff3b30;
+
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+
+    font-family: "Roboto", serif;
+    --radius: 0.5rem;
 }
 
-* {
-    -webkit-user-select: none; /* Safari */
-    -ms-user-select: none; /* IE 10 and IE 11 */
-    user-select: none; /* Standard syntax */
-}
 
-h1, h2, h3, h4, h5 {
-    font-weight: bold;
-}
-
-body {
-    background: #FFF0D1;
-}
-
-body, html {
-    height: 100vh;
+html, body {
+    height: 100dvh;
     overflow: hidden;
 }
 
-
+* {
+    box-sizing: border-box;
+}
